@@ -1,0 +1,47 @@
+{
+  "expo": {
+    "name": "BénévolApp",
+    "slug": "benevolapp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/icon.jpg",
+    "splash": {
+      "image": "./assets/splash.jpg",
+      "resizeMode": "contain",
+      "backgroundColor": "#7B68EE"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.benevolapp.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.jpg",
+        "backgroundColor": "#7B68EE"
+      },
+      "googleServicesFiles" : "./google-services.json",
+      "package": "com.benevolapp.app"
+    },
+    "web": {
+      "favicon": "./assets/icon.jpg"
+    },
+    "androidStatusBar": {
+      "backgroundColor": "#7B68EE",
+      "barStyle": "light-content",
+      "translucent": false
+    },
+    "plugins": [
+      "expo-secure-store"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "c5fc1b6f-d572-4b6a-a6aa-a32e70507c10"
+      }
+    },
+    "owner": "asmaaouahyb"
+  }
+}

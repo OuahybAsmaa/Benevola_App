@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "887023278150",
+    "project_id": "react-native-app-39960",
+    "storage_bucket": "react-native-app-39960.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:887023278150:android:a3d4359aeec5ecad3a9247",
+        "android_client_info": {
+          "package_name": "com.benevolapp.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDJUtSVn_oVMBIq5BtOyw1-xirt0rFjQrM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
