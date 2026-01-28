@@ -1,0 +1,24 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# Env
+.env
+.env.local
+
+# Expo / React Native
+.expo/
+dist/
+build/
+*.apk
+*.aab
+android/
+ios/
+
+# NestJS
+dist/
+
+# OS
+.DS_Store
+ 
