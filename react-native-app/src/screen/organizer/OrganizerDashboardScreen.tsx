@@ -1,11 +1,36 @@
 "use client"
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native"
+import { 
+  View, 
+  Text, 
+  ScrollView, 
+  TouchableOpacity, 
+  StyleSheet, 
+  Modal, 
+  TextInput,
+  Platform,
+  StatusBar,
+  Keyboard,
+  KeyboardAvoidingView
+} from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import MobileHeader from "../../components/MobileHeader"
 import { useAuth } from "../../hooks/useAuth"
+import { useState, useRef, useEffect } from "react"
 
 interface OrganizerDashboardScreenProps {
   onNavigate: (screen: string) => void
+}
+
+interface VolunteerMessage {
+  id: string
+  volunteerName: string
+  volunteerAvatar: string
+  messages: Array<{
+    id: string
+    sender: "volunteer" | "organizer"
+    content: string
+    timestamp: string
+  }>
 }
 
 const missions = [
@@ -17,6 +42,7 @@ const missions = [
     maxParticipants: 10,
     date: "23 Dec 2024",
     status: "active",
+    unreadMessages: 3,
   },
   {
     id: "2",
@@ -26,6 +52,7 @@ const missions = [
     maxParticipants: 15,
     date: "24 Dec 2024",
     status: "full",
+    unreadMessages: 0,
   },
   {
     id: "3",
@@ -35,6 +62,7 @@ const missions = [
     maxParticipants: 12,
     date: "25 Dec 2024",
     status: "active",
+    unreadMessages: 2,
   },
   {
     id: "4",
@@ -44,11 +72,153 @@ const missions = [
     maxParticipants: 8,
     date: "28 Dec 2024",
     status: "draft",
+    unreadMessages: 0,
   },
 ]
 
 export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashboardScreenProps) {
   const { user } = useAuth()
+  const [showMessagingModal, setShowMessagingModal] = useState(false)
+  const [selectedMissionId, setSelectedMissionId] = useState<string | null>(null)
+  const [selectedVolunteer, setSelectedVolunteer] = useState<VolunteerMessage | null>(null)
+  const [messageText, setMessageText] = useState("")
+  const [keyboardHeight, setKeyboardHeight] = useState(0)
+  const scrollViewRef = useRef<ScrollView>(null)
+
+  // Gestion du clavier pour Android
+  useEffect(() => {
+    if (Platform.OS === "android") {
+      const keyboardDidShowListener = Keyboard.addListener(
+        'keyboardDidShow',
+        (e) => {
+          setKeyboardHeight(e.endCoordinates.height)
+        }
+      )
+      const keyboardDidHideListener = Keyboard.addListener(
+        'keyboardDidHide',
+        () => {
+          setKeyboardHeight(0)
+        }
+      )
+
+      return () => {
+        keyboardDidShowListener.remove()
+        keyboardDidHideListener.remove()
+      }
+    }
+  }, [])
+
+  // Sample data: Messages by mission and volunteer
+  const missionVolunteerMessages: { [key: string]: VolunteerMessage[] } = {
+    "1": [
+      {
+        id: "v1",
+        volunteerName: "Ahmed Ben Ali",
+        volunteerAvatar: "A",
+        messages: [
+          { id: "m1", sender: "volunteer", content: "À quelle heure je dois arriver exactement?", timestamp: "09:30" },
+          { id: "m2", sender: "organizer", content: "À 8h00 du matin sur place", timestamp: "09:45" },
+          { id: "m3", sender: "volunteer", content: "Merci beaucoup!", timestamp: "10:00" },
+        ],
+      },
+      {
+        id: "v2",
+        volunteerName: "Fatima Zohra",
+        volunteerAvatar: "F",
+        messages: [
+          { id: "m1", sender: "volunteer", content: "Quel matériel je dois apporter?", timestamp: "10:15" },
+          { id: "m2", sender: "organizer", content: "Apportez juste des gants de travail", timestamp: "10:30" },
+        ],
+      },
+      {
+        id: "v3",
+        volunteerName: "Karim",
+        volunteerAvatar: "K",
+        messages: [
+          { id: "m1", sender: "volunteer", content: "Je peux venir avec mon ami?", timestamp: "08:00" },
+        ],
+      },
+    ],
+    "3": [
+      {
+        id: "v4",
+        volunteerName: "Sofia Martinez",
+        volunteerAvatar: "S",
+        messages: [
+          { id: "m1", sender: "volunteer", content: "Y aura-t-il des repas fournis?", timestamp: "14:00" },
+          { id: "m2", sender: "organizer", content: "Oui, nous fournirons le déjeuner", timestamp: "14:15" },
+        ],
+      },
+      {
+        id: "v5",
+        volunteerName: "Hassan",
+        volunteerAvatar: "H",
+        messages: [
+          { id: "m1", sender: "volunteer", content: "Merci pour cette belle mission", timestamp: "12:45" },
+        ],
+      },
+    ],
+  }
+
+  const totalUnreadMessages = missions.reduce((sum, mission) => sum + (mission.unreadMessages || 0), 0)
+
+  const handleOpenMessages = (missionId: string) => {
+    setSelectedMissionId(missionId)
+    setSelectedVolunteer(null)
+    setShowMessagingModal(true)
+  }
+
+  const handleCloseMessages = () => {
+    setShowMessagingModal(false)
+    setSelectedMissionId(null)
+    setSelectedVolunteer(null)
+    setMessageText("")
+    setKeyboardHeight(0)
+  }
+
+  const handleSelectVolunteer = (volunteer: VolunteerMessage) => {
+    setSelectedVolunteer(volunteer)
+    setMessageText("")
+    // Faire défiler vers le bas après un court délai
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true })
+    }, 100)
+  }
+
+  const handleSendMessage = () => {
+    if (!messageText.trim() || !selectedVolunteer || !selectedMissionId) return
+    
+    // Créer un nouveau message
+    const newMessage = {
+      id: `m${selectedVolunteer.messages.length + 1}`,
+      sender: "organizer" as const,
+      content: messageText.trim(),
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    }
+    
+    // Mettre à jour les messages du volontaire
+    const updatedVolunteer = {
+      ...selectedVolunteer,
+      messages: [...selectedVolunteer.messages, newMessage]
+    }
+    
+    // Mettre à jour la liste des messages de la mission
+    missionVolunteerMessages[selectedMissionId] = missionVolunteerMessages[selectedMissionId].map(v => 
+      v.id === selectedVolunteer.id ? updatedVolunteer : v
+    )
+    
+    // Mettre à jour l'état
+    setSelectedVolunteer(updatedVolunteer)
+    setMessageText("")
+    
+    // Faire défiler vers le bas
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true })
+    }, 100)
+  }
+
+  const currentMission = missions.find(m => m.id === selectedMissionId)
+  const currentVolunteers = selectedMissionId ? missionVolunteerMessages[selectedMissionId] || [] : []
 
   return (
     <View style={styles.container}>
@@ -56,7 +226,7 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
         title=""
         showProfile
         showNotifications
-        notificationCount={3}
+        notificationCount={3 + totalUnreadMessages}
         user={{
           firstName: user?.firstName || "Organisateur",
           lastName: user?.lastName || "",
@@ -94,10 +264,10 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
             </View>
             <View style={styles.statCard}>
               <View style={styles.statIconContainer}>
-                <Ionicons name="checkmark-circle-outline" size={24} color="#3b82f6" />
+                <Ionicons name="mail-outline" size={24} color="#f59e0b" />
               </View>
-              <Text style={styles.statValue}>2</Text>
-              <Text style={styles.statLabel}>Actives</Text>
+              <Text style={styles.statValue}>{totalUnreadMessages}</Text>
+              <Text style={styles.statLabel}>Messages</Text>
             </View>
           </View>
 
@@ -145,6 +315,14 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
                     <Ionicons name="calendar-outline" size={16} color="#666" />
                     <Text style={styles.infoText}>{mission.date}</Text>
                   </View>
+                  {mission.unreadMessages > 0 && (
+                    <View style={styles.infoItem}>
+                      <Ionicons name="mail-outline" size={16} color="#f59e0b" />
+                      <Text style={[styles.infoText, { color: "#f59e0b", fontWeight: "600" }]}>
+                        {mission.unreadMessages} message{mission.unreadMessages > 1 ? "s" : ""}
+                      </Text>
+                    </View>
+                  )}
                 </View>
 
                 <View style={styles.actions}>
@@ -152,6 +330,17 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
                     <Ionicons name="create-outline" size={16} color="#666" />
                     <Text style={styles.editButtonText}>Modifier</Text>
                   </TouchableOpacity>
+                  {mission.unreadMessages > 0 && (
+                    <TouchableOpacity 
+                      style={[styles.editButton, styles.messageButtonOrganzier]}
+                      onPress={() => handleOpenMessages(mission.id)}
+                    >
+                      <Ionicons name="mail-outline" size={16} color="#f59e0b" />
+                      <Text style={[styles.editButtonText, { color: "#f59e0b" }]}>
+                        {mission.unreadMessages}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
                   <TouchableOpacity style={styles.deleteButton}>
                     <Ionicons name="trash-outline" size={16} color="#ef4444" />
                   </TouchableOpacity>
@@ -165,6 +354,146 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
       <TouchableOpacity style={styles.fabButton} onPress={() => onNavigate("organizer-create")}>
         <Ionicons name="add" size={32} color="white" />
       </TouchableOpacity>
+
+      {/* Messaging Modal */}
+      <Modal
+        visible={showMessagingModal}
+        animationType="slide"
+        transparent={false}
+        onRequestClose={handleCloseMessages}
+      >
+        <View style={styles.modalContainer}>
+          <StatusBar backgroundColor="#fff" barStyle="dark-content" />
+          
+          {/* Header personnalisé pour la modale */}
+          <View style={styles.customHeader}>
+            <TouchableOpacity 
+              onPress={() => selectedVolunteer ? setSelectedVolunteer(null) : handleCloseMessages()}
+              style={styles.backButton}
+            >
+              <Ionicons name="chevron-back" size={24} color="#374151" />
+            </TouchableOpacity>
+            
+            <View style={styles.headerContent}>
+              <Text style={styles.headerTitle}>
+                {selectedVolunteer ? selectedVolunteer.volunteerName : "Messages"}
+              </Text>
+              {!selectedVolunteer && currentMission && (
+                <Text style={styles.headerSubtitle}>{currentMission.title}</Text>
+              )}
+            </View>
+            
+            <View style={{ width: 40 }} />
+          </View>
+
+          {!selectedVolunteer ? (
+            // Volunteers List View
+            <View style={styles.volunteersContent}>
+              <ScrollView style={styles.volunteersList}>
+                {currentVolunteers.length === 0 ? (
+                  <View style={styles.emptyMessagingContainer}>
+                    <Ionicons name="mail-outline" size={48} color="#d1d5db" />
+                    <Text style={styles.emptyMessagingText}>Aucun message</Text>
+                  </View>
+                ) : (
+                  currentVolunteers.map((volunteer) => (
+                    <TouchableOpacity
+                      key={volunteer.id}
+                      style={styles.volunteerListItem}
+                      onPress={() => handleSelectVolunteer(volunteer)}
+                    >
+                      <View style={styles.volunteerListAvatar}>
+                        <Text style={styles.volunteerListAvatarText}>{volunteer.volunteerAvatar}</Text>
+                      </View>
+                      <View style={styles.volunteerListInfo}>
+                        <Text style={styles.volunteerListName}>{volunteer.volunteerName}</Text>
+                        <Text style={styles.volunteerListPreview} numberOfLines={1}>
+                          {volunteer.messages[volunteer.messages.length - 1].content}
+                        </Text>
+                      </View>
+                      <View style={styles.volunteerListArrow}>
+                        <Ionicons name="chevron-forward" size={20} color="#ccc" />
+                      </View>
+                    </TouchableOpacity>
+                  ))
+                )}
+              </ScrollView>
+            </View>
+          ) : (
+            // Conversation View - Solution hybride
+            <KeyboardAvoidingView
+              style={styles.keyboardAvoidingView}
+              behavior={Platform.OS === "ios" ? "padding" : undefined}
+              keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+            >
+              <View style={styles.conversationContainer}>
+                {/* Messages */}
+                <ScrollView 
+                  ref={scrollViewRef}
+                  style={styles.messagesContent}
+                  contentContainerStyle={styles.messagesContentContainer}
+                  keyboardShouldPersistTaps="handled"
+                  onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+                >
+                  {selectedVolunteer.messages.map((msg) => (
+                    <View
+                      key={msg.id}
+                      style={[
+                        styles.messageBubble,
+                        msg.sender === "organizer" ? styles.messageOrganizer : styles.messageVolunteer,
+                      ]}
+                    >
+                      <Text style={[
+                        styles.messageText,
+                        msg.sender === "organizer" && styles.messageOrganizerText
+                      ]}>
+                        {msg.content}
+                      </Text>
+                      <Text style={[
+                        styles.messageTime,
+                        msg.sender === "organizer" && styles.messageOrganizerTime
+                      ]}>
+                        {msg.timestamp}
+                      </Text>
+                    </View>
+                  ))}
+                  {/* Espace en bas pour éviter que l'input cache les messages */}
+                  <View style={{ height: Platform.OS === "ios" ? 100 : 120 }} />
+                </ScrollView>
+
+                {/* Input avec gestion manuelle pour Android */}
+                <View style={[
+                    styles.replyWrapper,
+                    Platform.OS === "android" && keyboardHeight > 0 && { 
+                    marginBottom: keyboardHeight + 15 // Réduire de 50px pour monter plus haut
+                    }
+                  ]}>
+                  <View style={styles.replyContainer}>
+                    <TextInput
+                      style={styles.replyInput}
+                      placeholder="Répondre au bénévole..."
+                      placeholderTextColor="#999"
+                      multiline
+                      value={messageText}
+                      onChangeText={setMessageText}
+                      onSubmitEditing={handleSendMessage}
+                      returnKeyType="send"
+                      blurOnSubmit={false}
+                    />
+                    <TouchableOpacity 
+                      style={[styles.replyButton, !messageText.trim() && styles.replyButtonDisabled]}
+                      onPress={handleSendMessage}
+                      disabled={!messageText.trim()}
+                    >
+                      <Ionicons name="send" size={20} color="white" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </KeyboardAvoidingView>
+          )}
+        </View>
+      </Modal>
     </View>
   )
 }
@@ -300,6 +629,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 16,
     marginBottom: 12,
+    flexWrap: "wrap",
   },
   infoItem: {
     flexDirection: "row",
@@ -341,6 +671,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  messageButtonOrganzier: {
+    flex: 1,
+    borderColor: "#fef3c7",
+    backgroundColor: "#fffbeb",
+  },
   fabButton: {
     position: "absolute",
     bottom: 30,
@@ -356,5 +691,185 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 6,
     elevation: 8,
+  },
+
+  // Modal Styles
+  modalContainer: {
+    flex: 1,
+    backgroundColor: "#f9fafb",
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight || 0 : 0,
+  },
+  keyboardAvoidingView: {
+    flex: 1,
+  },
+  customHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: "white",
+    borderBottomWidth: 1,
+    borderBottomColor: "#f3f4f6",
+    paddingTop: Platform.OS === "ios" ? 50 : 12,
+  },
+  backButton: {
+    padding: 4,
+  },
+  headerContent: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#111827",
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    color: "#666",
+    marginTop: 2,
+  },
+
+  volunteersContent: {
+    flex: 1,
+  },
+  volunteersList: {
+    flex: 1,
+  },
+  emptyMessagingContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 60,
+    gap: 12,
+  },
+  emptyMessagingText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#666",
+  },
+  volunteerListItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: "white",
+    borderBottomWidth: 1,
+    borderBottomColor: "#f3f4f6",
+    gap: 12,
+  },
+  volunteerListAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#7B68EE",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  volunteerListAvatarText: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  volunteerListInfo: {
+    flex: 1,
+  },
+  volunteerListName: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#111",
+    marginBottom: 4,
+  },
+  volunteerListPreview: {
+    fontSize: 12,
+    color: "#999",
+  },
+  volunteerListArrow: {
+    paddingLeft: 8,
+  },
+
+  // Conversation Styles
+  conversationContainer: {
+    flex: 1,
+  },
+  messagesContent: {
+    flex: 1,
+  },
+  messagesContentContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  
+  // Input Styles
+  replyWrapper: {
+    backgroundColor: "white",
+    borderTopWidth: 1,
+    borderTopColor: "#e5e7eb",
+    paddingBottom: Platform.OS === "android" ? 40 : 0,
+  },
+  replyContainer: {
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "flex-end",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: "white",
+  },
+  replyInput: {
+    flex: 1,
+    backgroundColor: "#f3f4f6",
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: Platform.OS === "ios" ? 10 : 8,
+    fontSize: 14,
+    color: "#111",
+    maxHeight: 100,
+    minHeight: 40,
+  },
+  replyButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#7B68EE",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 4,
+  },
+  replyButtonDisabled: {
+    backgroundColor: "#d1d5db",
+  },
+  
+  messageBubble: {
+    maxWidth: "80%",
+    marginVertical: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 12,
+  },
+  messageVolunteer: {
+    alignSelf: "flex-start",
+    backgroundColor: "white",
+    borderLeftWidth: 3,
+    borderLeftColor: "#7B68EE",
+  },
+  messageOrganizer: {
+    alignSelf: "flex-end",
+    backgroundColor: "#7B68EE",
+  },
+  messageText: {
+    fontSize: 14,
+    color: "#111",
+    marginBottom: 4,
+  },
+  messageOrganizerText: {
+    color: "white",
+  },
+  messageTime: {
+    fontSize: 11,
+    color: "#999",
+    alignSelf: "flex-end",
+  },
+  messageOrganizerTime: {
+    color: "#ddd",
   },
 })

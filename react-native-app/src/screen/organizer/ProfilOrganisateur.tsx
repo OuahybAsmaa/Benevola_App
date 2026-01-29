@@ -11,24 +11,23 @@ interface ProfileScreenProps {
 }
 
 const menuItems = [
-  { id: "1", label: "Mes favoris", icon: "heart-outline" },
-  { id: "2", label: "Paramètres", icon: "settings-outline" },
+  { id: "1", label: "Paramètres", icon: "settings-outline" },
 ]
 
-const missions = [
-  { id: "1", title: "Nettoyage de plage", status: "En cours", color: "#10b981" },
-  { id: "2", title: "Aide aux devoirs", status: "Complétée", color: "#3b82f6" },
-  { id: "3", title: "Distribution de repas", status: "À venir", color: "#f59e0b" },
+const createdMissions = [
+  { id: "1", title: "Nettoyage de plage", volunteers: 12, color: "#10b981" },
+  { id: "2", title: "Aide aux devoirs", volunteers: 8, color: "#3b82f6" },
+  { id: "3", title: "Distribution de repas", volunteers: 15, color: "#f59e0b" },
 ]
 
 const history = [
-  { id: "1", title: "Nettoyage de plage", date: "15 Dec 2024", color: "#10b981" },
-  { id: "2", title: "Aide aux devoirs", date: "10 Dec 2024", color: "#3b82f6" },
+  { id: "1", title: "Mission 1", date: "2023-10-01", color: "#10b981" },
+  { id: "2", title: "Mission 2", date: "2023-10-02", color: "#3b82f6" },
 ]
 
 export default function ProfilOrganisateur({ onNavigate }: ProfileScreenProps) {
   const { user, logout } = useAuth()
-  const [activeTab, setActiveTab] = useState<"missions" | "history">("missions")
+  const [activeTab, setActiveTab] = useState("missions")
 
   const handleLogout = async () => {
     try {
@@ -74,56 +73,22 @@ export default function ProfilOrganisateur({ onNavigate }: ProfileScreenProps) {
           </View>
         </View>
 
-        {/* Tabs */}
-        <View style={styles.tabsContainer}>
-          <TouchableOpacity
-            onPress={() => setActiveTab("missions")}
-            style={[styles.tab, activeTab === "missions" && styles.activeTab]}
-          >
-            <Text style={[styles.tabText, activeTab === "missions" && styles.activeTabText]}>Mes missions</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => setActiveTab("history")}
-            style={[styles.tab, activeTab === "history" && styles.activeTab]}
-          >
-            <Text style={[styles.tabText, activeTab === "history" && styles.activeTabText]}>Historique</Text>
-          </TouchableOpacity>
+        {/* Missions Créées Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Missions créées</Text>
+          {createdMissions.map((mission) => (
+            <View key={mission.id} style={styles.missionItem}>
+              <View style={[styles.missionIcon, { backgroundColor: mission.color + "20" }]}>
+                <Ionicons name="location-outline" size={24} color={mission.color} />
+              </View>
+              <View style={styles.missionDetails}>
+                <Text style={styles.missionTitle}>{mission.title}</Text>
+                <Text style={styles.missionVolunteers}>{mission.volunteers} bénévoles inscrits</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="#999" />
+            </View>
+          ))}
         </View>
-
-        {/* Missions Section */}
-        {activeTab === "missions" && (
-          <View style={styles.section}>
-            {missions.map((mission) => (
-              <View key={mission.id} style={styles.missionItem}>
-                <View style={[styles.missionIcon, { backgroundColor: mission.color + "20" }]}>
-                  <Ionicons name="location-outline" size={24} color={mission.color} />
-                </View>
-                <View style={styles.missionDetails}>
-                  <Text style={styles.missionTitle}>{mission.title}</Text>
-                  <Text style={[styles.missionStatus, { color: mission.color }]}>{mission.status}</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color="#999" />
-              </View>
-            ))}
-          </View>
-        )}
-
-        {/* History Section */}
-        {activeTab === "history" && (
-          <View style={styles.section}>
-            {history.map((item) => (
-              <View key={item.id} style={styles.historyItem}>
-                <View style={[styles.historyIcon, { backgroundColor: item.color + "20" }]}>
-                  <Ionicons name="calendar-outline" size={24} color={item.color} />
-                </View>
-                <View style={styles.historyDetails}>
-                  <Text style={styles.historyTitle}>{item.title}</Text>
-                  <Text style={styles.historyDate}>Complétée le {item.date}</Text>
-                </View>
-              </View>
-            ))}
-          </View>
-        )}
 
         {/* Menu */}
         <View style={styles.section}>
@@ -246,6 +211,12 @@ const styles = StyleSheet.create({
   section: {
     padding: 20,
   },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#111",
+    marginBottom: 16,
+  },
   missionItem: {
     flexDirection: "row",
     alignItems: "center",
@@ -276,43 +247,10 @@ const styles = StyleSheet.create({
     color: "#111",
     marginBottom: 4,
   },
-  missionStatus: {
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  historyItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "white",
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  historyIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 12,
-  },
-  historyDetails: {
-    flex: 1,
-  },
-  historyTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#111",
-    marginBottom: 4,
-  },
-  historyDate: {
+  missionVolunteers: {
     fontSize: 14,
     color: "#666",
+    fontWeight: "500",
   },
   menuCard: {
     backgroundColor: "white",
@@ -355,5 +293,40 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#ef4444",
+  },
+  historyItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "white",
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  historyIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  historyDetails: {
+    flex: 1,
+  },
+  historyTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#111",
+    marginBottom: 4,
+  },
+  historyDate: {
+    fontSize: 14,
+    color: "#666",
+    fontWeight: "500",
   },
 })
