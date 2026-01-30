@@ -1,6 +1,6 @@
 // components/common/Button.tsx
 import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, type ViewStyle, type TextStyle } from "react-native"
-import { colors, borderRadius, spacing, fontSize, fontWeight } from "../../styles/theme"
+import { colors, borderRadius, spacing, fontSize, fontWeight } from "../../style/theme"
 
 interface ButtonProps {
   title: string

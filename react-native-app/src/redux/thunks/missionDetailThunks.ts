@@ -1,5 +1,5 @@
 import { createAsyncThunk } from '@reduxjs/toolkit'
-import missionService, { Mission } from '../../services/api/mission.service'
+import missionService, { Mission } from '../../services/mission.service'
 
 export const fetchMissionByIdThunk = createAsyncThunk<Mission | null, string, { rejectValue: string }>(
   'missionDetail/fetchMissionById',

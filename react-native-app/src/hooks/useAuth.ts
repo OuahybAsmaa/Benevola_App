@@ -3,7 +3,7 @@ import { useCallback } from 'react'
 import { useAppDispatch, useAppSelector } from '../redux/hooks'
 import { loginThunk, registerThunk, logoutThunk } from '../redux/thunks/authThunks'
 import { clearError } from '../redux/slices/authSlice'
-import { LoginCredentials, RegisterData } from '../services/api/auth.service'
+import { LoginCredentials, RegisterData } from '../services/auth.service'
 
 export function useAuth() {
   const dispatch = useAppDispatch()

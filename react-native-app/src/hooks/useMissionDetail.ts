@@ -1,6 +1,6 @@
 // hooks/useMissionDetail.ts
 import { useState, useEffect, useCallback } from "react"
-import missionService, { Mission } from "../services/api/mission.service"
+import missionService, { Mission } from "../services/mission.service"
 import { useAuth } from "./useAuth"
 
 interface UseMissionDetailReturn {

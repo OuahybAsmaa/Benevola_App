@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { View, Text, StyleSheet, Animated } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
+import { styles } from '../style/benevole/SplashScreen.style'
 
 export default function SplashScreen() {
   const [scale] = useState(new Animated.Value(0.5))
@@ -37,28 +38,3 @@ export default function SplashScreen() {
   )
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#7B68EE",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  logoContainer: {
-    marginBottom: 32,
-  },
-  title: {
-    fontSize: 36,
-    fontWeight: "bold",
-    color: "#fff",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 18,
-    color: "rgba(255, 255, 255, 0.8)",
-    marginBottom: 48,
-  },
-  loaderContainer: {
-    marginTop: 20,
-  },
-})

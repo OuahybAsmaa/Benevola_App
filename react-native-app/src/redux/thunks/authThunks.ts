@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { createAsyncThunk } from '@reduxjs/toolkit'
-import authService, { LoginCredentials, RegisterData, User } from '../../services/api/auth.service'
+import authService, { LoginCredentials, RegisterData, User } from '../../services/auth.service'
 
 export const checkAuthThunk = createAsyncThunk<
   User | null,

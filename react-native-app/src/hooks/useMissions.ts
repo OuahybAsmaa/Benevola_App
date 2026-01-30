@@ -1,6 +1,6 @@
 // hooks/useMissions.ts
 import { useState, useEffect, useCallback } from "react"
-import missionService, { Mission } from "../services/api/mission.service"
+import missionService, { Mission } from "../services/mission.service"
 
 interface UseMissionsOptions {
   category?: string

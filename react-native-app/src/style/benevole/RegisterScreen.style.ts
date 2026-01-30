@@ -1,0 +1,196 @@
+import { StyleSheet } from 'react-native';
+export const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
+  contentContainer: {
+    flexGrow: 1,
+  },
+  header: {
+    height: 128,
+    backgroundColor: "#7B68EE",
+    borderBottomLeftRadius: 40,
+    borderBottomRightRadius: 40,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: "600",
+    color: "#fff",
+    marginTop: 4,
+  },
+  form: {
+    padding: 24,
+    paddingBottom: 96,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#111827",
+    textAlign: "center",
+    marginBottom: 24,
+  },
+  inputGroup: {
+    gap: 16,
+  },
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    height: 48,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    paddingHorizontal: 16,
+  },
+  inputIcon: {
+    marginRight: 12,
+  },
+  input: {
+    flex: 1,
+    fontSize: 16,
+    color: "#111827",
+  },
+  eyeIcon: {
+    padding: 4,
+  },
+  passwordStrength: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 8,
+    gap: 8,
+  },
+  strengthBar: {
+    flex: 1,
+    height: 6,
+    backgroundColor: "#E5E7EB",
+    borderRadius: 3,
+    overflow: "hidden",
+  },
+  strengthFill: {
+    height: "100%",
+    borderRadius: 3,
+  },
+  strengthLabel: {
+    fontSize: 12,
+    color: "#6B7280",
+  },
+  errorText: {
+    fontSize: 12,
+    color: "#EF4444",
+    marginTop: 4,
+    marginLeft: 4,
+  },
+  roleSection: {
+    marginTop: 8,
+  },
+  roleTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#111827",
+    marginBottom: 12,
+  },
+  roleButtons: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  roleButton: {
+    flex: 1,
+    height: 144,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: "#D1D5DB",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 16,
+    position: "relative",
+  },
+  roleButtonActive: {
+    borderColor: "#7B68EE",
+    backgroundColor: "#F5F3FF",
+  },
+  checkmark: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    width: 24,
+    height: 24,
+    backgroundColor: "#7B68EE",
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  roleButtonTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#111827",
+    marginTop: 8,
+  },
+  roleButtonSubtitle: {
+    fontSize: 12,
+    color: "#6B7280",
+    marginTop: 4,
+    textAlign: "center",
+  },
+  termsContainer: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+    marginTop: 8,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: "#D1D5DB",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 2,
+  },
+  checkboxActive: {
+    backgroundColor: "#7B68EE",
+    borderColor: "#7B68EE",
+  },
+  termsText: {
+    flex: 1,
+    fontSize: 14,
+    color: "#374151",
+    lineHeight: 20,
+  },
+  termsLink: {
+    color: "#7B68EE",
+    textDecorationLine: "underline",
+  },
+  registerButton: {
+    height: 48,
+    backgroundColor: "#7B68EE",
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 24,
+  },
+  registerButtonDisabled: {
+    opacity: 0.6,
+  },
+  registerButtonText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#fff",
+  },
+  loginContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 24,
+  },
+  loginText: {
+    fontSize: 14,
+    color: "#6B7280",
+  },
+  loginLink: {
+    fontSize: 14,
+    color: "#7B68EE",
+    fontWeight: "bold",
+  },
+})

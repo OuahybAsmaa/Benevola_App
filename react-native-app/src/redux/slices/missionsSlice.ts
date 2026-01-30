@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import { Mission } from '../../services/api/mission.service'
+import { Mission } from '../../services/mission.service'
 import { fetchMissionsThunk } from '../thunks/missionsThunks'
 
 interface MissionsState {

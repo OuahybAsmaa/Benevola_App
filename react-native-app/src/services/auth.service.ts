@@ -1,5 +1,5 @@
 // src/services/api/auth.service.ts
-import api from './api.client'           // ← le client axios avec interceptors
+import api from '../api/loginAPI'           // ← le client axios avec interceptors
 import * as SecureStore from 'expo-secure-store'
 
 export interface User {

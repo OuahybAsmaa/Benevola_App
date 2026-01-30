@@ -1,12 +1,12 @@
 // screens/LoginScreen.refactored.tsx
-import { View, Text, ScrollView, StyleSheet } from "react-native"
+import { View, Text, ScrollView} from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useAuth } from "../hooks/useAuth"
 import { useForm } from "../hooks/useForm"
 import Input from "../components/common/Input"
 import Button from "../components/common/Button"
-import { colors, spacing, fontSize, fontWeight, borderRadius } from "../styles/theme"
-import { commonStyles } from "../styles/common"
+import { commonStyles } from "../style/common"
+import { styles } from '../style/benevole/LoginScreen.style'
 
 interface LoginScreenProps {
   onNavigate: (screen: string) => void
@@ -138,57 +138,3 @@ export default function LoginScreen({ onNavigate }: LoginScreenProps) {
   )
 }
 
-const styles = StyleSheet.create({
-  contentContainer: {
-    flexGrow: 1,
-  },
-  
-  header: {
-    height: 192,
-    backgroundColor: colors.primary,
-    borderBottomLeftRadius: 40,
-    borderBottomRightRadius: 40,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  
-  headerTitle: {
-    fontSize: fontSize.xxl,
-    fontWeight: fontWeight.semibold,
-    color: colors.text.inverse,
-    marginTop: spacing.sm,
-  },
-  
-  form: {
-    padding: spacing.xxl,
-  },
-  
-  title: {
-    fontSize: fontSize.xxl,
-    fontWeight: fontWeight.bold,
-    color: colors.text.primary,
-    textAlign: "center",
-    marginBottom: spacing.xxxl,
-  },
-  
-  inputGroup: {
-    gap: spacing.lg,
-  },
-  
-  forgotButton: {
-    alignSelf: "flex-end",
-  },
-  
-  signupContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 40,
-    gap: spacing.sm,
-  },
-  
-  signupText: {
-    fontSize: fontSize.base,
-    color: colors.text.secondary,
-  },
-})

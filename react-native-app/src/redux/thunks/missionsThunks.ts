@@ -1,5 +1,5 @@
 import { createAsyncThunk } from '@reduxjs/toolkit'
-import missionService, { Mission } from '../../services/api/mission.service'
+import missionService, { Mission } from '../../services/mission.service'
 
 interface FetchMissionsParams {
   category?: string
