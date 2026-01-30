@@ -5,8 +5,6 @@ import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps"
 import MobileHeader from "../components/MobileHeader"
 import { styles } from '../style/benevole/MapScreen.style'
 
-const { width, height } = Dimensions.get("window")
-
 const missions = [
   {
     id: "1",
