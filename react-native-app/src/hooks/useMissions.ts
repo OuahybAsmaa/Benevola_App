@@ -1,67 +1,74 @@
-// hooks/useMissions.ts
-import { useState, useEffect, useCallback } from "react"
-import missionService, { Mission } from "../services/mission.service"
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from '../redux/store';
+import {
+  createMissionThunk,
+  getAllMissionsThunk,
+  getMissionByIdThunk,
+  getMyMissionsThunk,
+  updateMissionThunk,
+  deleteMissionThunk,
+  getMissionsNearbyThunk,
+} from '../redux/thunks/missionsThunks';
+import { resetCreateSuccess, clearError } from '../redux/slices/missionsSlice';
+import { CreateMissionDto } from '../services/mission.service';
 
-interface UseMissionsOptions {
-  category?: string
-  city?: string
-  autoLoad?: boolean // Option pour charger automatiquement ou non
-}
+export const useMission = () => {
+  const dispatch = useDispatch<AppDispatch>();
+  const { missions, myMissions, currentMission, loading, error, createSuccess } = useSelector(
+    (state: RootState) => state.mission
+  );
 
-interface UseMissionsReturn {
-  missions: Mission[]
-  isLoading: boolean
-  error: string | null
-  refresh: () => Promise<void>
-  loadMissions: () => Promise<void>
-}
+  const createMission = (missionData: CreateMissionDto, imageUri?: string) => {
+    return dispatch(createMissionThunk({ missionData, imageUri }));
+  };
 
-export function useMissions(options?: UseMissionsOptions): UseMissionsReturn {
-  const [missions, setMissions] = useState<Mission[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const getAllMissions = () => {
+    return dispatch(getAllMissionsThunk());
+  };
 
-  const { category, city, autoLoad = true } = options || {}
+  const getMissionById = (id: string) => {
+    return dispatch(getMissionByIdThunk(id));
+  };
 
-  // Fonction pour charger les missions
-  const loadMissions = useCallback(async () => {
-    try {
-      setIsLoading(true)
-      setError(null)
-      
-      const filters = {
-        category: category !== "all" ? category : undefined,
-        city: city || undefined,
-      }
-      
-      const data = await missionService.getMissions(filters)
-      setMissions(data)
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Une erreur est survenue"
-      setError(errorMessage)
-      console.error("Error loading missions:", err)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [category, city])
+  const getMyMissions = () => {
+    return dispatch(getMyMissionsThunk());
+  };
 
-  // Charger automatiquement au montage et quand les filtres changent
-  useEffect(() => {
-    if (autoLoad) {
-      loadMissions()
-    }
-  }, [loadMissions, autoLoad])
+  const updateMission = (id: string, missionData: Partial<CreateMissionDto>, imageUri?: string) => {
+    return dispatch(updateMissionThunk({ id, missionData, imageUri }));
+  };
 
-  // Fonction de rafraîchissement
-  const refresh = useCallback(async () => {
-    await loadMissions()
-  }, [loadMissions])
+  const deleteMission = (id: string) => {
+    return dispatch(deleteMissionThunk(id));
+  };
+
+  const getMissionsNearby = (latitude: number, longitude: number, radius: number) => {
+    return dispatch(getMissionsNearbyThunk({ latitude, longitude, radius }));
+  };
+
+  const resetSuccess = () => {
+    dispatch(resetCreateSuccess());
+  };
+
+  const clearMissionError = () => {
+    dispatch(clearError());
+  };
 
   return {
     missions,
-    isLoading,
+    myMissions,
+    currentMission,
+    loading,
     error,
-    refresh,
-    loadMissions,
-  }
-}
+    createSuccess,
+    createMission,
+    getAllMissions,
+    getMissionById,
+    getMyMissions,
+    updateMission,
+    deleteMission,
+    getMissionsNearby,
+    resetSuccess,
+    clearMissionError,
+  };
+};

@@ -1,4 +1,4 @@
-import AsyncStorage from "@react-native-async-storage/async-storage"
+import * as SecureStore from 'expo-secure-store';
 import { createAsyncThunk } from '@reduxjs/toolkit'
 import authService, { LoginCredentials, RegisterData, User } from '../../services/auth.service'
 
@@ -10,7 +10,7 @@ export const checkAuthThunk = createAsyncThunk<
   "auth/checkAuth",
   async (_, { rejectWithValue }) => {
     try {
-      const token = await AsyncStorage.getItem("token")
+      const token = await SecureStore.getItemAsync("access_token")
 
       // 🔥 PAS DE TOKEN → PAS CONNECTÉ
       if (!token) {

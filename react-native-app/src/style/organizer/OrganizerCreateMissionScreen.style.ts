@@ -191,4 +191,9 @@ export const styles = StyleSheet.create({
     fontWeight: "600",
     color: "white",
   },
+  uploadedImage: {
+  width: '100%',
+  height: 200,
+  borderRadius: 8,
+},
 })

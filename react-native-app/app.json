@@ -23,7 +23,7 @@
         "foregroundImage": "./assets/icon.jpg",
         "backgroundColor": "#7B68EE"
       },
-      "googleServicesFiles" : "./google-services.json",
+      "googleServicesFiles": "./google-services.json",
       "package": "com.benevolapp.app"
     },
     "web": {
@@ -35,7 +35,14 @@
       "translucent": false
     },
     "plugins": [
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "L'application a besoin d'accéder à vos photos pour vous permettre d'uploader une image.",
+          "cameraPermission": "L'application a besoin d'accéder à votre caméra pour prendre des photos."
+        }
+      ]
     ],
     "extra": {
       "eas": {

@@ -8,13 +8,17 @@ import {
   Platform,
   StatusBar,
   Keyboard,
-  KeyboardAvoidingView
+  KeyboardAvoidingView,
+  ActivityIndicator,
+  Image
 } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import MobileHeader from "../../components/MobileHeader"
 import { useAuth } from "../../hooks/useAuth"
 import { useState, useRef, useEffect } from "react"
 import { styles } from '../../style/organizer/OrganizerDashboardScreen.style'
+import { useMission } from '../../hooks/useMissions'
+import API_BASE_URL from '../../config/baseUrl'
 
 interface OrganizerDashboardScreenProps {
   onNavigate: (screen: string) => void
@@ -32,51 +36,15 @@ interface VolunteerMessage {
   }>
 }
 
-const missions = [
-  {
-    id: "1",
-    title: "Nettoyage de la plage Ain Diab",
-    category: "Environnement",
-    participants: 5,
-    maxParticipants: 10,
-    date: "23 Dec 2024",
-    status: "active",
-    unreadMessages: 3,
-  },
-  {
-    id: "2",
-    title: "Aide aux devoirs pour enfants",
-    category: "Éducation",
-    participants: 15,
-    maxParticipants: 15,
-    date: "24 Dec 2024",
-    status: "full",
-    unreadMessages: 0,
-  },
-  {
-    id: "3",
-    title: "Distribution de repas",
-    category: "Social",
-    participants: 8,
-    maxParticipants: 12,
-    date: "25 Dec 2024",
-    status: "active",
-    unreadMessages: 2,
-  },
-  {
-    id: "4",
-    title: "Plantation d'arbres",
-    category: "Environnement",
-    participants: 3,
-    maxParticipants: 8,
-    date: "28 Dec 2024",
-    status: "draft",
-    unreadMessages: 0,
-  },
-]
+function formatDate(dateStr: string): string {
+  const date = new Date(dateStr + "T00:00:00")
+  return date.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })
+}
 
 export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashboardScreenProps) {
   const { user } = useAuth()
+  const { myMissions, getMyMissions, loading } = useMission()
+
   const [showMessagingModal, setShowMessagingModal] = useState(false)
   const [selectedMissionId, setSelectedMissionId] = useState<string | null>(null)
   const [selectedVolunteer, setSelectedVolunteer] = useState<VolunteerMessage | null>(null)
@@ -84,22 +52,20 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
   const [keyboardHeight, setKeyboardHeight] = useState(0)
   const scrollViewRef = useRef<ScrollView>(null)
 
-  // Gestion du clavier pour Android
+  useEffect(() => {
+    getMyMissions()
+  }, [])
+
   useEffect(() => {
     if (Platform.OS === "android") {
       const keyboardDidShowListener = Keyboard.addListener(
-        'keyboardDidShow',
-        (e) => {
-          setKeyboardHeight(e.endCoordinates.height)
-        }
+        "keyboardDidShow",
+        (e) => { setKeyboardHeight(e.endCoordinates.height) }
       )
       const keyboardDidHideListener = Keyboard.addListener(
-        'keyboardDidHide',
-        () => {
-          setKeyboardHeight(0)
-        }
+        "keyboardDidHide",
+        () => { setKeyboardHeight(0) }
       )
-
       return () => {
         keyboardDidShowListener.remove()
         keyboardDidHideListener.remove()
@@ -107,59 +73,8 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
     }
   }, [])
 
-  // Sample data: Messages by mission and volunteer
-  const missionVolunteerMessages: { [key: string]: VolunteerMessage[] } = {
-    "1": [
-      {
-        id: "v1",
-        volunteerName: "Ahmed Ben Ali",
-        volunteerAvatar: "A",
-        messages: [
-          { id: "m1", sender: "volunteer", content: "À quelle heure je dois arriver exactement?", timestamp: "09:30" },
-          { id: "m2", sender: "organizer", content: "À 8h00 du matin sur place", timestamp: "09:45" },
-          { id: "m3", sender: "volunteer", content: "Merci beaucoup!", timestamp: "10:00" },
-        ],
-      },
-      {
-        id: "v2",
-        volunteerName: "Fatima Zohra",
-        volunteerAvatar: "F",
-        messages: [
-          { id: "m1", sender: "volunteer", content: "Quel matériel je dois apporter?", timestamp: "10:15" },
-          { id: "m2", sender: "organizer", content: "Apportez juste des gants de travail", timestamp: "10:30" },
-        ],
-      },
-      {
-        id: "v3",
-        volunteerName: "Karim",
-        volunteerAvatar: "K",
-        messages: [
-          { id: "m1", sender: "volunteer", content: "Je peux venir avec mon ami?", timestamp: "08:00" },
-        ],
-      },
-    ],
-    "3": [
-      {
-        id: "v4",
-        volunteerName: "Sofia Martinez",
-        volunteerAvatar: "S",
-        messages: [
-          { id: "m1", sender: "volunteer", content: "Y aura-t-il des repas fournis?", timestamp: "14:00" },
-          { id: "m2", sender: "organizer", content: "Oui, nous fournirons le déjeuner", timestamp: "14:15" },
-        ],
-      },
-      {
-        id: "v5",
-        volunteerName: "Hassan",
-        volunteerAvatar: "H",
-        messages: [
-          { id: "m1", sender: "volunteer", content: "Merci pour cette belle mission", timestamp: "12:45" },
-        ],
-      },
-    ],
-  }
-
-  const totalUnreadMessages = missions.reduce((sum, mission) => sum + (mission.unreadMessages || 0), 0)
+  const missionVolunteerMessages: { [key: string]: VolunteerMessage[] } = {}
+  const totalUnreadMessages = 0
 
   const handleOpenMessages = (missionId: string) => {
     setSelectedMissionId(missionId)
@@ -178,7 +93,6 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
   const handleSelectVolunteer = (volunteer: VolunteerMessage) => {
     setSelectedVolunteer(volunteer)
     setMessageText("")
-    // Faire défiler vers le bas après un court délai
     setTimeout(() => {
       scrollViewRef.current?.scrollToEnd({ animated: true })
     }, 100)
@@ -186,37 +100,46 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
 
   const handleSendMessage = () => {
     if (!messageText.trim() || !selectedVolunteer || !selectedMissionId) return
-    
-    // Créer un nouveau message
+
     const newMessage = {
       id: `m${selectedVolunteer.messages.length + 1}`,
       sender: "organizer" as const,
       content: messageText.trim(),
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     }
-    
-    // Mettre à jour les messages du volontaire
+
     const updatedVolunteer = {
       ...selectedVolunteer,
-      messages: [...selectedVolunteer.messages, newMessage]
+      messages: [...selectedVolunteer.messages, newMessage],
     }
-    
-    // Mettre à jour la liste des messages de la mission
-    missionVolunteerMessages[selectedMissionId] = missionVolunteerMessages[selectedMissionId].map(v => 
+
+    missionVolunteerMessages[selectedMissionId] = missionVolunteerMessages[selectedMissionId].map((v) =>
       v.id === selectedVolunteer.id ? updatedVolunteer : v
     )
-    
-    // Mettre à jour l'état
+
     setSelectedVolunteer(updatedVolunteer)
     setMessageText("")
-    
-    // Faire défiler vers le bas
+
     setTimeout(() => {
       scrollViewRef.current?.scrollToEnd({ animated: true })
     }, 100)
   }
 
-  const currentMission = missions.find(m => m.id === selectedMissionId)
+  // Fonction helper pour construire l'URL de l'image
+  const getImageUri = (imageUrl: string | null | undefined): string | null => {
+    if (!imageUrl) return null
+    
+    // Si l'URL commence par http/https, c'est déjà une URL complète
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      return imageUrl
+    }
+    
+    // Sinon, construire l'URL avec le base URL
+    const separator = imageUrl.startsWith('/') ? '' : '/'
+    return `${API_BASE_URL}${separator}${imageUrl}`
+  }
+
+  const currentMission = myMissions.find((m) => m.id === selectedMissionId)
   const currentVolunteers = selectedMissionId ? missionVolunteerMessages[selectedMissionId] || [] : []
 
   return (
@@ -237,7 +160,7 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
 
       <ScrollView style={styles.scrollView}>
         <View style={styles.content}>
-          {/* Titre du Dashboard */}
+          {/* Titre */}
           <View style={styles.dashboardHeader}>
             <View>
               <Text style={styles.greeting}>Tableau de Bord</Text>
@@ -251,14 +174,14 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
               <View style={styles.statIconContainer}>
                 <Ionicons name="briefcase-outline" size={24} color="#7B68EE" />
               </View>
-              <Text style={styles.statValue}>4</Text>
+              <Text style={styles.statValue}>{myMissions.length}</Text>
               <Text style={styles.statLabel}>Missions</Text>
             </View>
             <View style={styles.statCard}>
               <View style={styles.statIconContainer}>
                 <Ionicons name="people-outline" size={24} color="#10b981" />
               </View>
-              <Text style={styles.statValue}>26</Text>
+              <Text style={styles.statValue}>0</Text>
               <Text style={styles.statLabel}>Bénévoles</Text>
             </View>
             <View style={styles.statCard}>
@@ -278,78 +201,102 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
             </TouchableOpacity>
           </View>
 
-          <View style={styles.missionsList}>
-            {missions.slice(0, 3).map((mission) => (
-              <View key={mission.id} style={styles.missionCard}>
-                <View style={styles.missionHeader}>
-                  <View style={styles.missionTitleContainer}>
-                    <Text style={styles.missionTitle}>{mission.title}</Text>
-                    <View style={styles.categoryBadge}>
-                      <Text style={styles.categoryText}>{mission.category}</Text>
+          {/* Loading */}
+          {loading && (
+            <View style={{ padding: 40, alignItems: "center" }}>
+              <ActivityIndicator size="large" color="#7B68EE" />
+              <Text style={{ marginTop: 12, color: "#666" }}>Chargement...</Text>
+            </View>
+          )}
+
+          {/* Empty state */}
+          {!loading && myMissions.length === 0 && (
+            <View style={{ padding: 40, alignItems: "center" }}>
+              <Ionicons name="briefcase-outline" size={48} color="#d1d5db" />
+              <Text style={{ marginTop: 12, color: "#666", textAlign: "center" }}>
+                Vous n'avez pas encore de missions.{"\n"}Créez votre première mission !
+              </Text>
+            </View>
+          )}
+
+          {/* Liste des missions */}
+          {!loading && (
+            <View style={styles.missionsList}>
+              {myMissions.slice(0, 3).map((mission) => {
+                const imageUri = getImageUri(mission.image)
+                
+                return (
+                  <View key={mission.id} style={styles.missionCard}>
+
+                    {/* Image */}
+                    {imageUri ? (
+                      <Image
+                        source={{ uri: imageUri }}
+                        style={styles.missionImage}
+                        resizeMode="cover"
+                        onError={(error) => {
+                          // Les logs ont été supprimés ici
+                        }}
+                        onLoad={() => {
+                          // Les logs ont été supprimés ici
+                        }}
+                      />
+                    ) : (
+                      <View style={styles.missionImagePlaceholder}>
+                        <Ionicons name="image-outline" size={32} color="#ccc" />
+                      </View>
+                    )}
+
+                    {/* Titre + Status */}
+                    <View style={styles.missionHeader}>
+                      <View style={styles.missionTitleContainer}>
+                        <Text style={styles.missionTitle}>{mission.title}</Text>
+                        <View style={styles.categoryBadge}>
+                          <Text style={styles.categoryText}>{mission.category}</Text>
+                        </View>
+                      </View>
+                      <View style={[styles.statusBadge, { backgroundColor: "#3b82f6" }]}>
+                        <Text style={styles.statusText}>Actif</Text>
+                      </View>
+                    </View>
+
+                    {/* Infos */}
+                    <View style={styles.missionInfo}>
+                      <View style={styles.infoItem}>
+                        <Ionicons name="people-outline" size={16} color="#666" />
+                        <Text style={styles.infoText}>0/{mission.maxParticipants}</Text>
+                      </View>
+                      <View style={styles.infoItem}>
+                        <Ionicons name="calendar-outline" size={16} color="#666" />
+                        <Text style={styles.infoText}>{formatDate(mission.date)}</Text>
+                      </View>
+                      {mission.location && (
+                        <View style={styles.infoItem}>
+                          <Ionicons name="location-outline" size={16} color="#666" />
+                          <Text style={styles.infoText} numberOfLines={1}>{mission.location}</Text>
+                        </View>
+                      )}
+                    </View>
+
+                    {/* Actions */}
+                    <View style={styles.actions}>
+                      <TouchableOpacity style={styles.editButton} onPress={() => onNavigate("edit-mission")}>
+                        <Ionicons name="create-outline" size={16} color="#666" />
+                        <Text style={styles.editButtonText}>Modifier</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.deleteButton}>
+                        <Ionicons name="trash-outline" size={16} color="#ef4444" />
+                      </TouchableOpacity>
                     </View>
                   </View>
-                  <View
-                    style={[
-                      styles.statusBadge,
-                      {
-                        backgroundColor:
-                          mission.status === "full" ? "#10b981" : mission.status === "draft" ? "#6b7280" : "#3b82f6",
-                      },
-                    ]}
-                  >
-                    <Text style={styles.statusText}>
-                      {mission.status === "full" ? "Complet" : mission.status === "draft" ? "Brouillon" : "Actif"}
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={styles.missionInfo}>
-                  <View style={styles.infoItem}>
-                    <Ionicons name="people-outline" size={16} color="#666" />
-                    <Text style={styles.infoText}>
-                      {mission.participants}/{mission.maxParticipants}
-                    </Text>
-                  </View>
-                  <View style={styles.infoItem}>
-                    <Ionicons name="calendar-outline" size={16} color="#666" />
-                    <Text style={styles.infoText}>{mission.date}</Text>
-                  </View>
-                  {mission.unreadMessages > 0 && (
-                    <View style={styles.infoItem}>
-                      <Ionicons name="mail-outline" size={16} color="#f59e0b" />
-                      <Text style={[styles.infoText, { color: "#f59e0b", fontWeight: "600" }]}>
-                        {mission.unreadMessages} message{mission.unreadMessages > 1 ? "s" : ""}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-
-                <View style={styles.actions}>
-                  <TouchableOpacity style={styles.editButton} onPress={() => onNavigate("edit-mission")}>
-                    <Ionicons name="create-outline" size={16} color="#666" />
-                    <Text style={styles.editButtonText}>Modifier</Text>
-                  </TouchableOpacity>
-                  {mission.unreadMessages > 0 && (
-                    <TouchableOpacity 
-                      style={[styles.editButton, styles.messageButtonOrganzier]}
-                      onPress={() => handleOpenMessages(mission.id)}
-                    >
-                      <Ionicons name="mail-outline" size={16} color="#f59e0b" />
-                      <Text style={[styles.editButtonText, { color: "#f59e0b" }]}>
-                        {mission.unreadMessages}
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                  <TouchableOpacity style={styles.deleteButton}>
-                    <Ionicons name="trash-outline" size={16} color="#ef4444" />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ))}
-          </View>
+                )
+              })}
+            </View>
+          )}
         </View>
       </ScrollView>
 
+      {/* FAB Créer mission */}
       <TouchableOpacity style={styles.fabButton} onPress={() => onNavigate("organizer-create")}>
         <Ionicons name="add" size={32} color="white" />
       </TouchableOpacity>
@@ -363,16 +310,15 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
       >
         <View style={styles.modalContainer}>
           <StatusBar backgroundColor="#fff" barStyle="dark-content" />
-          
-          {/* Header personnalisé pour la modale */}
+
           <View style={styles.customHeader}>
-            <TouchableOpacity 
-              onPress={() => selectedVolunteer ? setSelectedVolunteer(null) : handleCloseMessages()}
+            <TouchableOpacity
+              onPress={() => (selectedVolunteer ? setSelectedVolunteer(null) : handleCloseMessages())}
               style={styles.backButton}
             >
               <Ionicons name="chevron-back" size={24} color="#374151" />
             </TouchableOpacity>
-            
+
             <View style={styles.headerContent}>
               <Text style={styles.headerTitle}>
                 {selectedVolunteer ? selectedVolunteer.volunteerName : "Messages"}
@@ -381,12 +327,11 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
                 <Text style={styles.headerSubtitle}>{currentMission.title}</Text>
               )}
             </View>
-            
+
             <View style={{ width: 40 }} />
           </View>
 
           {!selectedVolunteer ? (
-            // Volunteers List View
             <View style={styles.volunteersContent}>
               <ScrollView style={styles.volunteersList}>
                 {currentVolunteers.length === 0 ? (
@@ -419,15 +364,13 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
               </ScrollView>
             </View>
           ) : (
-            // Conversation View - Solution hybride
             <KeyboardAvoidingView
               style={styles.keyboardAvoidingView}
               behavior={Platform.OS === "ios" ? "padding" : undefined}
               keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
             >
               <View style={styles.conversationContainer}>
-                {/* Messages */}
-                <ScrollView 
+                <ScrollView
                   ref={scrollViewRef}
                   style={styles.messagesContent}
                   contentContainerStyle={styles.messagesContentContainer}
@@ -442,31 +385,25 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
                         msg.sender === "organizer" ? styles.messageOrganizer : styles.messageVolunteer,
                       ]}
                     >
-                      <Text style={[
-                        styles.messageText,
-                        msg.sender === "organizer" && styles.messageOrganizerText
-                      ]}>
+                      <Text style={[styles.messageText, msg.sender === "organizer" && styles.messageOrganizerText]}>
                         {msg.content}
                       </Text>
-                      <Text style={[
-                        styles.messageTime,
-                        msg.sender === "organizer" && styles.messageOrganizerTime
-                      ]}>
+                      <Text style={[styles.messageTime, msg.sender === "organizer" && styles.messageOrganizerTime]}>
                         {msg.timestamp}
                       </Text>
                     </View>
                   ))}
-                  {/* Espace en bas pour éviter que l'input cache les messages */}
                   <View style={{ height: Platform.OS === "ios" ? 100 : 120 }} />
                 </ScrollView>
 
-                {/* Input avec gestion manuelle pour Android */}
-                <View style={[
+                <View
+                  style={[
                     styles.replyWrapper,
-                    Platform.OS === "android" && keyboardHeight > 0 && { 
-                    marginBottom: keyboardHeight + 15 // Réduire de 50px pour monter plus haut
-                    }
-                  ]}>
+                    Platform.OS === "android" && keyboardHeight > 0 && {
+                      marginBottom: keyboardHeight + 15,
+                    },
+                  ]}
+                >
                   <View style={styles.replyContainer}>
                     <TextInput
                       style={styles.replyInput}
@@ -479,7 +416,7 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
                       returnKeyType="send"
                       blurOnSubmit={false}
                     />
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       style={[styles.replyButton, !messageText.trim() && styles.replyButtonDisabled]}
                       onPress={handleSendMessage}
                       disabled={!messageText.trim()}
@@ -496,4 +433,3 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
     </View>
   )
 }
-

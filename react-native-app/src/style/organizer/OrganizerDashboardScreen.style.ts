@@ -373,4 +373,20 @@ export const styles = StyleSheet.create({
   messageOrganizerTime: {
     color: "#ddd",
   },
+  missionImage: {
+  width: '100%',
+  height: 160,
+  borderTopLeftRadius: 12,
+  borderTopRightRadius: 12,
+  resizeMode: 'cover',
+},
+missionImagePlaceholder: {
+  width: '100%',
+  height: 160,
+  backgroundColor: '#f3f4f6',
+  borderTopLeftRadius: 12,
+  borderTopRightRadius: 12,
+  justifyContent: 'center',
+  alignItems: 'center',
+},
 })

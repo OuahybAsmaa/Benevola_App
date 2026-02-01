@@ -1,153 +1,149 @@
-// services/api/mission.service.ts
+// src/services/mission.service.ts
+import api from '../api/loginAPI';
+
+export interface CreateMissionDto {
+  title: string;
+  category: string;
+  date: string;
+  time: string;
+  duration?: string;
+  location: string;
+  latitude?: number;
+  longitude?: number;
+  maxParticipants: string;
+  description?: string;
+  image?: any;
+}
 
 export interface Mission {
-  id: string
-  title: string
-  category: string
-  image: any
-  distance: string
-  date: string
-  time: string
-  participants: number
-  maxParticipants: number
-  organization: {
-    name: string
-    logo: any
-    verified?: boolean
-  }
-  description?: string
-  requirements?: string[]
-  address?: string
-  latitude?: number
-  longitude?: number
+  id: string;
+  title: string;
+  category: string;
+  date: string;
+  time: string;
+  duration?: string;
+  location: string;
+  position?: any;
+  maxParticipants: number;
+  description?: string;
+  image?: string;
+  organizerId: string;
+  organizer: {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    avatar?: string;
+  };
+  createdAt: string;
+  updatedAt: string;
 }
 
 class MissionService {
-  private mockMissions: Mission[] = [
-    {
-      id: "1",
-      title: "Nettoyage de la plage Ain Diab",
-      category: "Environnement",
-      image: require("../../assets/beach-cleanup-volunteers.png"),
-      distance: "2.5 km",
-      date: "23 Décembre 2024",
-      time: "09:00 - 12:00",
-      participants: 5,
-      maxParticipants: 10,
-      organization: {
-        name: "Association Verte",
-        logo: require("../../assets/environmental-organization-logo.png"),
-        verified: true,
-      },
-      description: "Rejoignez-nous pour une action de nettoyage de la plage d'Ain Diab.",
-      requirements: ["Gants fournis", "Tenue décontractée", "Eau recommandée"],
-      address: "Plage Ain Diab, Boulevard de l'Océan Atlantique, Casablanca",
-      latitude: 33.5731,
-      longitude: -7.5898,
-    },
-    {
-      id: "2",
-      title: "Aide aux devoirs pour enfants",
-      category: "Éducation",
-      image: require("../../assets/tutoring-children-education.jpg"),
-      distance: "1.2 km",
-      date: "24 Décembre 2024",
-      time: "14:00 - 17:00",
-      participants: 8,
-      maxParticipants: 15,
-      organization: {
-        name: "Éducation Pour Tous",
-        logo: require("../../assets/education-organization-logo.jpg"),
-        verified: true,
-      },
-      latitude: 33.585,
-      longitude: -7.6,
-    },
-    {
-      id: "3",
-      title: "Visite aux personnes âgées",
-      category: "Social",
-      image: require("../../assets/visiting-elderly-people.jpg"),
-      distance: "3.8 km",
-      date: "25 Décembre 2024",
-      time: "10:00 - 13:00",
-      participants: 12,
-      maxParticipants: 12,
-      organization: {
-        name: "Cœurs Solidaires",
-        logo: require("../../assets/social-organization-logo.png"),
-        verified: false,
-      },
-      latitude: 33.565,
-      longitude: -7.58,
-    },
-  ]
-
-  async getMissions(filters?: {
-    category?: string
-    city?: string
-  }): Promise<Mission[]> {
+  async createMission(missionData: CreateMissionDto, imageUri?: string): Promise<Mission> {
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 500))
+      const formData = new FormData();
+      formData.append('title', missionData.title);
+      formData.append('category', missionData.category);
+      formData.append('date', missionData.date);
+      formData.append('time', missionData.time);
+      if (missionData.duration) formData.append('duration', missionData.duration);
+      formData.append('location', missionData.location);
+      if (missionData.latitude !== undefined) formData.append('latitude', missionData.latitude.toString());
+      if (missionData.longitude !== undefined) formData.append('longitude', missionData.longitude.toString());
+      formData.append('maxParticipants', missionData.maxParticipants);
+      if (missionData.description) formData.append('description', missionData.description);
 
-      let filteredMissions = [...this.mockMissions]
+      if (imageUri) {
+        const filename = imageUri.split('/').pop() || 'image.jpg';
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : 'image/jpeg';
 
-      if (filters?.category && filters.category !== "all") {
-        filteredMissions = filteredMissions.filter(
-          (m) => m.category.toLowerCase() === filters.category?.toLowerCase()
-        )
+        formData.append('image', {
+          uri: imageUri,
+          name: filename,
+          type,
+        } as any);
+
+        console.log('📷 Image ajoutée:', filename);
       }
 
-      return filteredMissions
-    } catch (error) {
-      throw new Error("Erreur lors du chargement des missions")
+      console.log('🌐 Envoi vers: /missions');
+
+      const response = await api.post('/missions', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      console.log('✅ Mission créée:', response.data);
+      return response.data;
+
+    } catch (error: any) {
+      console.error('❌ Erreur création mission:', error.response?.data || error.message);
+      throw error;
     }
   }
 
-  async getMissionById(id: string): Promise<Mission | null> {
-    try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 300))
-
-      const mission = this.mockMissions.find((m) => m.id === id)
-      return mission || null
-    } catch (error) {
-      throw new Error("Erreur lors du chargement de la mission")
-    }
+  async getAllMissions(): Promise<Mission[]> {
+    const response = await api.get('/missions');
+    return response.data;
   }
 
-  async registerToMission(missionId: string, userId: string): Promise<boolean> {
-    try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 500))
-
-      const mission = this.mockMissions.find((m) => m.id === missionId)
-      if (mission && mission.participants < mission.maxParticipants) {
-        mission.participants += 1
-        return true
-      }
-      return false
-    } catch (error) {
-      throw new Error("Erreur lors de l'inscription")
-    }
+  async getMissionById(id: string): Promise<Mission> {
+    const response = await api.get(`/missions/${id}`);
+    return response.data;
   }
 
-  async unregisterFromMission(missionId: string, userId: string): Promise<boolean> {
-    try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 500))
+  async getMyMissions(): Promise<Mission[]> {
+    const response = await api.get('/missions/organizer/my-missions');
+    return response.data;
+  }
 
-      const mission = this.mockMissions.find((m) => m.id === missionId)
-      if (mission && mission.participants > 0) {
-        mission.participants -= 1
-        return true
-      }
-      return false
-    } catch (error) {
-      throw new Error("Erreur lors de la désinscription")
+  async updateMission(id: string, missionData: Partial<CreateMissionDto>, imageUri?: string): Promise<Mission> {
+    const formData = new FormData();
+    if (missionData.title) formData.append('title', missionData.title);
+    if (missionData.category) formData.append('category', missionData.category);
+    if (missionData.date) formData.append('date', missionData.date);
+    if (missionData.time) formData.append('time', missionData.time);
+    if (missionData.duration) formData.append('duration', missionData.duration);
+    if (missionData.location) formData.append('location', missionData.location);
+    if (missionData.latitude !== undefined) formData.append('latitude', missionData.latitude.toString());
+    if (missionData.longitude !== undefined) formData.append('longitude', missionData.longitude.toString());
+    if (missionData.maxParticipants) formData.append('maxParticipants', missionData.maxParticipants);
+    if (missionData.description) formData.append('description', missionData.description);
+
+    if (imageUri) {
+      const filename = imageUri.split('/').pop() || 'image.jpg';
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : 'image/jpeg';
+
+      formData.append('image', {
+        uri: imageUri,
+        name: filename,
+        type,
+      } as any);
     }
+
+    const response = await api.put(`/missions/${id}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    return response.data;
+  }
+
+  async deleteMission(id: string): Promise<void> {
+    await api.delete(`/missions/${id}`);
+  }
+
+  async getMissionsNearby(latitude: number, longitude: number, radius: number): Promise<Mission[]> {
+    const response = await api.get('/missions', {
+      params: { latitude, longitude, radius },
+    });
+    return response.data;
   }
 }
 
-export default new MissionService()
+export default new MissionService();
