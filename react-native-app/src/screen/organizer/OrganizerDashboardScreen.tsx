@@ -10,7 +10,8 @@ import {
   Keyboard,
   KeyboardAvoidingView,
   ActivityIndicator,
-  Image
+  Image,
+  Alert
 } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import MobileHeader from "../../components/MobileHeader"
@@ -21,7 +22,7 @@ import { useMission } from '../../hooks/useMissions'
 import API_BASE_URL from '../../config/baseUrl'
 
 interface OrganizerDashboardScreenProps {
-  onNavigate: (screen: string) => void
+  onNavigate: (screen: string, params?: any) => void
 }
 
 interface VolunteerMessage {
@@ -37,13 +38,13 @@ interface VolunteerMessage {
 }
 
 function formatDate(dateStr: string): string {
-  const date = new Date(dateStr + "T00:00:00")
+  const date = new Date(dateStr)
   return date.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })
 }
 
 export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashboardScreenProps) {
   const { user } = useAuth()
-  const { myMissions, getMyMissions, loading } = useMission()
+  const { myMissions, getMyMissions, deleteMission, loading } = useMission()
 
   const [showMessagingModal, setShowMessagingModal] = useState(false)
   const [selectedMissionId, setSelectedMissionId] = useState<string | null>(null)
@@ -123,6 +124,43 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
     setTimeout(() => {
       scrollViewRef.current?.scrollToEnd({ animated: true })
     }, 100)
+  }
+
+  // Fonction de suppression avec confirmation
+  const handleDeleteMission = async (missionId: string, missionTitle: string) => {
+    Alert.alert(
+      'Confirmer la suppression',
+      `Êtes-vous sûr de vouloir supprimer la mission "${missionTitle}" ?`,
+      [
+        {
+          text: 'Annuler',
+          style: 'cancel',
+        },
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              console.log('🗑️ Suppression de la mission:', missionId)
+              
+              // Appel du thunk Redux pour supprimer
+              const result = await deleteMission(missionId)
+              
+              // Vérifier si la suppression a réussi
+              if (result.meta.requestStatus === 'fulfilled') {
+                Alert.alert('Succès', 'Mission supprimée avec succès')
+              } else {
+                Alert.alert('Erreur', 'Impossible de supprimer la mission')
+              }
+            } catch (error: any) {
+              console.error('Erreur suppression:', error)
+              Alert.alert('Erreur', error.message || 'Une erreur est survenue')
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    )
   }
 
   // Fonction helper pour construire l'URL de l'image
@@ -225,6 +263,11 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
               {myMissions.slice(0, 3).map((mission) => {
                 const imageUri = getImageUri(mission.image)
                 
+                // Debug: afficher les URLs dans la console
+                console.log('Mission:', mission.title)
+                console.log('Image brute:', mission.image)
+                console.log('Image URI construite:', imageUri)
+                
                 return (
                   <View key={mission.id} style={styles.missionCard}>
 
@@ -235,10 +278,12 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
                         style={styles.missionImage}
                         resizeMode="cover"
                         onError={(error) => {
-                          // Les logs ont été supprimés ici
+                          console.error('❌ Erreur chargement image pour:', mission.title)
+                          console.error('URL:', imageUri)
+                          console.error('Erreur:', error.nativeEvent.error)
                         }}
                         onLoad={() => {
-                          // Les logs ont été supprimés ici
+                          console.log('✅ Image chargée avec succès:', mission.title)
                         }}
                       />
                     ) : (
@@ -280,11 +325,22 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
 
                     {/* Actions */}
                     <View style={styles.actions}>
-                      <TouchableOpacity style={styles.editButton} onPress={() => onNavigate("edit-mission")}>
+                      <TouchableOpacity 
+                        style={styles.editButton} 
+                        onPress={() => {
+                          console.log('🔧 Modifier mission ID:', mission.id)
+                          onNavigate("edit-mission", { missionId: mission.id })
+                        }}
+                      >
                         <Ionicons name="create-outline" size={16} color="#666" />
                         <Text style={styles.editButtonText}>Modifier</Text>
                       </TouchableOpacity>
-                      <TouchableOpacity style={styles.deleteButton}>
+                      
+                      {/* Bouton Supprimer avec confirmation */}
+                      <TouchableOpacity 
+                        style={styles.deleteButton}
+                        onPress={() => handleDeleteMission(mission.id, mission.title)}
+                      >
                         <Ionicons name="trash-outline" size={16} color="#ef4444" />
                       </TouchableOpacity>
                     </View>

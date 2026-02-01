@@ -63,10 +63,20 @@ function AppNavigator() {
   }, [dispatch])
 
   // ===== FONCTION DE NAVIGATION PRINCIPALE (useCallback pour stabilité) =====
-  const navigate = useCallback((screen, id = null, resetHistory = false) => {
-    // Sauvegarder l'ID si fourni
-    if (id !== null && id !== undefined) {
-      setSelectedMissionId(id)
+  const navigate = useCallback((screen, params = null, resetHistory = false) => {
+    console.log('🧭 Navigation vers:', screen, 'avec params:', params) // ⭐ DEBUG
+    
+    // Gérer les params (peut être un objet ou directement un ID pour rétrocompatibilité)
+    if (params !== null && params !== undefined) {
+      if (typeof params === 'object' && params.missionId) {
+        // Nouveau format : navigate("edit-mission", { missionId: "xxx" })
+        console.log('🆔 Mission ID reçu (objet):', params.missionId) // ⭐ DEBUG
+        setSelectedMissionId(params.missionId)
+      } else if (typeof params === 'string') {
+        // Ancien format : navigate("mission-detail", "id-xxx")
+        console.log('🆔 Mission ID reçu (string):', params) // ⭐ DEBUG
+        setSelectedMissionId(params)
+      }
     }
     
     // Gérer l'historique de navigation
@@ -173,7 +183,7 @@ function AppNavigator() {
     goBack,
     currentScreen,
     canGoBack: navigationHistory.length > 0,
-    resetAndNavigate: (screen, id = null) => navigate(screen, id, true)
+    resetAndNavigate: (screen, params = null) => navigate(screen, params, true)
   }
 
   // ===== RENDU DE L'ÉCRAN ACTUEL =====
@@ -197,6 +207,7 @@ function AppNavigator() {
     
     // Ajouter missionId si nécessaire
     if (currentScreen === "mission-detail" || currentScreen === "edit-mission") {
+      console.log('📦 Passage du missionId au composant:', selectedMissionId) // ⭐ DEBUG
       specificProps.missionId = selectedMissionId
     }
 

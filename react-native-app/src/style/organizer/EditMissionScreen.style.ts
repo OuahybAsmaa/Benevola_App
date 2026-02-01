@@ -177,4 +177,34 @@ export const styles = StyleSheet.create({
     fontWeight: "600",
     color: "white",
   },
+  // ⭐ STYLES AJOUTÉS POUR L'UPLOAD D'IMAGE
+imageUploadButton: {
+  width: '100%',
+  height: 200,
+  borderRadius: 12,
+  borderWidth: 2,
+  borderColor: '#e5e7eb',
+  borderStyle: 'dashed',
+  overflow: 'hidden',
+  backgroundColor: 'white',
+},
+imagePreview: {
+  width: '100%',
+  height: '100%',
+},
+imagePlaceholder: {
+  flex: 1,
+  justifyContent: 'center',
+  alignItems: 'center',
+  backgroundColor: '#f9fafb',
+},
+imagePlaceholderText: {
+  marginTop: 8,
+  color: '#9ca3af',
+  fontSize: 14,
+  textAlign: 'center',
+},
+submitButtonDisabled: {
+  opacity: 0.5,
+},
 })
