@@ -202,4 +202,12 @@ export const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#ef4444",
   },
+  // Dans votre fichier ProfileScreen.style.ts, ajoutez :
+
+avatarImage: {
+  width: 80,
+  height: 80,
+  borderRadius: 40,
+  backgroundColor: "#E5E7EB",
+},
 })

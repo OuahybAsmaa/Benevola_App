@@ -37,6 +37,7 @@ export interface Mission {
   };
   createdAt: string;
   updatedAt: string;
+  status: string; 
 }
 
 class MissionService {
@@ -97,6 +98,10 @@ class MissionService {
 
   async getMyMissions(): Promise<Mission[]> {
     const response = await api.get('/missions/organizer/my-missions');
+    return response.data;
+  }
+  async getMyFinishedMissions(): Promise<Mission[]> {
+    const response = await api.get('/missions/organizer/my-finished-missions');
     return response.data;
   }
 

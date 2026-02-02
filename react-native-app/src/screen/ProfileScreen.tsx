@@ -1,33 +1,39 @@
-import { useState } from "react"
-import { View, Text, ScrollView, TouchableOpacity} from "react-native"
+// screens/ProfileScreen.tsx
+import { useState, useEffect } from "react"
+import { View, Text, ScrollView, TouchableOpacity, Image, ActivityIndicator } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import MobileHeader from "../components/MobileHeader"
 import { useAuth } from "../hooks/useAuth"
+import { useMissionParticipant } from "../hooks/useMissionParticipant"
 import { styles } from '../style/benevole/ProfileScreen.style'
+import { getImageUrl } from "../config/api.config"
 
 interface ProfileScreenProps {
-  onNavigate: (screen: string) => void
+  onNavigate: (screen: string, id?: string) => void
 }
 
 const menuItems = [
-  { id: "1", label: "Mes favoris", icon: "heart-outline" },
   { id: "2", label: "Paramètres", icon: "settings-outline" },
-]
-
-const missions = [
-  { id: "1", title: "Nettoyage de plage", status: "En cours", color: "#10b981" },
-  { id: "2", title: "Aide aux devoirs", status: "Complétée", color: "#3b82f6" },
-  { id: "3", title: "Distribution de repas", status: "À venir", color: "#f59e0b" },
-]
-
-const history = [
-  { id: "1", title: "Nettoyage de plage", date: "15 Dec 2024", color: "#10b981" },
-  { id: "2", title: "Aide aux devoirs", date: "10 Dec 2024", color: "#3b82f6" },
 ]
 
 export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
   const { user, logout } = useAuth()
   const [activeTab, setActiveTab] = useState<"missions" | "history">("missions")
+  const { myRegistrations, getMyRegisteredMissions, loading } = useMissionParticipant()
+
+  useEffect(() => {
+    getMyRegisteredMissions()
+  }, [])
+
+  // Missions actives (active ou complete) où je suis inscrit
+  const activeMissions = myRegistrations.filter(
+    (reg) => reg.mission && (reg.mission.status === "active" || reg.mission.status === "complete")
+  )
+
+  // Missions terminées où j'étais inscrit
+  const finishedMissions = myRegistrations.filter(
+    (reg) => reg.mission && reg.mission.status === "finished"
+  )
 
   const handleLogout = async () => {
     try {
@@ -40,6 +46,22 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
 
   if (!user) return null
 
+  const avatarUrl = getImageUrl(user.avatar)
+
+  const getMissionStatusLabel = (status: string) => {
+    switch (status) {
+      case "active": return { label: "En cours", color: "#10b981" }
+      case "complete": return { label: "Complète", color: "#3b82f6" }
+      case "finished": return { label: "Terminée", color: "#6b7280" }
+      default: return { label: status, color: "#999" }
+    }
+  }
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })
+  }
+
   return (
     <View style={styles.container}>
       <MobileHeader title="Mon Profil" showBack onBack={() => onNavigate("home")} />
@@ -49,12 +71,21 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
         <View style={styles.profileHeader}>
           <View style={styles.profileInfo}>
             <View style={styles.avatarContainer}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>
-                  {user.firstName[0]}
-                  {user.lastName[0]}
-                </Text>
-              </View>
+              {avatarUrl ? (
+                <Image
+                  source={{ uri: avatarUrl }}
+                  style={styles.avatarImage}
+                  onError={() => console.log('❌ Erreur chargement avatar')}
+                  onLoad={() => console.log('✅ Avatar chargé')}
+                />
+              ) : (
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>
+                    {user.firstName?.[0] || ''}
+                    {user.lastName?.[0] || ''}
+                  </Text>
+                </View>
+              )}
             </View>
             <View style={styles.profileDetails}>
               <Text style={styles.profileName}>
@@ -79,48 +110,87 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
             onPress={() => setActiveTab("missions")}
             style={[styles.tab, activeTab === "missions" && styles.activeTab]}
           >
-            <Text style={[styles.tabText, activeTab === "missions" && styles.activeTabText]}>Mes missions</Text>
+            <Text style={[styles.tabText, activeTab === "missions" && styles.activeTabText]}>
+              Mes missions {activeMissions.length > 0 ? `(${activeMissions.length})` : ""}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => setActiveTab("history")}
             style={[styles.tab, activeTab === "history" && styles.activeTab]}
           >
-            <Text style={[styles.tabText, activeTab === "history" && styles.activeTabText]}>Historique</Text>
+            <Text style={[styles.tabText, activeTab === "history" && styles.activeTabText]}>
+              Historique {finishedMissions.length > 0 ? `(${finishedMissions.length})` : ""}
+            </Text>
           </TouchableOpacity>
         </View>
 
-        {/* Missions Section */}
-        {activeTab === "missions" && (
-          <View style={styles.section}>
-            {missions.map((mission) => (
-              <View key={mission.id} style={styles.missionItem}>
-                <View style={[styles.missionIcon, { backgroundColor: mission.color + "20" }]}>
-                  <Ionicons name="location-outline" size={24} color={mission.color} />
-                </View>
-                <View style={styles.missionDetails}>
-                  <Text style={styles.missionTitle}>{mission.title}</Text>
-                  <Text style={[styles.missionStatus, { color: mission.color }]}>{mission.status}</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color="#999" />
-              </View>
-            ))}
+        {/* Loading */}
+        {loading && (
+          <View style={{ padding: 20, alignItems: "center" }}>
+            <ActivityIndicator size="small" color="#10b981" />
           </View>
         )}
 
-        {/* History Section */}
-        {activeTab === "history" && (
+        {/* Mes Missions — actives/complètes, cliquables vers le détail */}
+        {!loading && activeTab === "missions" && (
           <View style={styles.section}>
-            {history.map((item) => (
-              <View key={item.id} style={styles.historyItem}>
-                <View style={[styles.historyIcon, { backgroundColor: item.color + "20" }]}>
-                  <Ionicons name="calendar-outline" size={24} color={item.color} />
-                </View>
-                <View style={styles.historyDetails}>
-                  <Text style={styles.historyTitle}>{item.title}</Text>
-                  <Text style={styles.historyDate}>Complétée le {item.date}</Text>
-                </View>
-              </View>
-            ))}
+            {activeMissions.length === 0 ? (
+              <Text style={{ textAlign: "center", color: "#999", padding: 20 }}>
+                Vous n'êtes inscrit à aucune mission pour le moment.
+              </Text>
+            ) : (
+              activeMissions.map((reg) => {
+                const { label, color } = getMissionStatusLabel(reg.mission.status)
+                return (
+                  <TouchableOpacity
+                    key={reg.id}
+                    style={styles.missionItem}
+                    onPress={() => onNavigate("mission-detail", reg.mission.id)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[styles.missionIcon, { backgroundColor: color + "20" }]}>
+                      <Ionicons name="location-outline" size={24} color={color} />
+                    </View>
+                    <View style={styles.missionDetails}>
+                      <Text style={styles.missionTitle}>{reg.mission.title}</Text>
+                      <Text style={[styles.missionStatus, { color }]}>{label}</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color="#999" />
+                  </TouchableOpacity>
+                )
+              })
+            )}
+          </View>
+        )}
+
+        {/* Historique — missions terminées, aussi cliquables */}
+        {!loading && activeTab === "history" && (
+          <View style={styles.section}>
+            {finishedMissions.length === 0 ? (
+              <Text style={{ textAlign: "center", color: "#999", padding: 20 }}>
+                Aucune mission terminée pour le moment.
+              </Text>
+            ) : (
+              finishedMissions.map((reg) => (
+                <TouchableOpacity
+                  key={reg.id}
+                  style={styles.historyItem}
+                  onPress={() => onNavigate("mission-detail", reg.mission.id)}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.historyIcon, { backgroundColor: "#6b728020" }]}>
+                    <Ionicons name="calendar-outline" size={24} color="#6b7280" />
+                  </View>
+                  <View style={styles.historyDetails}>
+                    <Text style={styles.historyTitle}>{reg.mission.title}</Text>
+                    <Text style={styles.historyDate}>
+                      Terminée le {formatDate(reg.mission.date)}
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color="#6b7280" />
+                </TouchableOpacity>
+              ))
+            )}
           </View>
         )}
 
@@ -140,7 +210,7 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
           </View>
         </View>
 
-        {/* Logout Button */}
+        {/* Logout */}
         <View style={styles.section}>
           <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
             <Ionicons name="log-out-outline" size={20} color="#ef4444" />
@@ -151,4 +221,3 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
     </View>
   )
 }
-

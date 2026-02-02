@@ -1,32 +1,42 @@
-import { useState } from "react"
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native"
+import { useState, useEffect } from "react"
+import { View, Text, ScrollView, TouchableOpacity, Image, ActivityIndicator } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import MobileHeader from "../../components/MobileHeader"
 import { useAuth } from "../../hooks/useAuth"
+import { useMission } from "../../hooks/useMissions"
 import { styles } from '../../style/organizer/ProfilOrganisateur.style'
 
 interface ProfileScreenProps {
   onNavigate: (screen: string) => void
 }
 
+const API_URL = 'http://192.168.0.105:3000'
+
 const menuItems = [
   { id: "1", label: "Paramètres", icon: "settings-outline" },
 ]
 
-const createdMissions = [
-  { id: "1", title: "Nettoyage de plage", volunteers: 12, color: "#10b981" },
-  { id: "2", title: "Aide aux devoirs", volunteers: 8, color: "#3b82f6" },
-  { id: "3", title: "Distribution de repas", volunteers: 15, color: "#f59e0b" },
-]
+const categoryColors: Record<string, string> = {
+  environnement: "#10b981",
+  education: "#3b82f6",
+  alimentaire: "#f59e0b",
+  social: "#8b5cf6",
+  sante: "#ef4444",
+  culture: "#ec4899",
+}
 
-const history = [
-  { id: "1", title: "Mission 1", date: "2023-10-01", color: "#10b981" },
-  { id: "2", title: "Mission 2", date: "2023-10-02", color: "#3b82f6" },
-]
+function getCategoryColor(category: string): string {
+  return categoryColors[category?.toLowerCase()] || "#6b7280"
+}
 
 export default function ProfilOrganisateur({ onNavigate }: ProfileScreenProps) {
   const { user, logout } = useAuth()
-  const [activeTab, setActiveTab] = useState("missions")
+  const { finishedMissions, getMyFinishedMissions, loading } = useMission()
+
+  // Fetch des missions terminées au montage
+  useEffect(() => {
+    getMyFinishedMissions()
+  }, [])
 
   const handleLogout = async () => {
     try {
@@ -35,6 +45,14 @@ export default function ProfilOrganisateur({ onNavigate }: ProfileScreenProps) {
     } catch (error) {
       console.error("Logout error:", error)
     }
+  }
+
+  const formatDate = (dateString: string): string => {
+    const date = new Date(dateString)
+    const day = String(date.getDate()).padStart(2, '0')
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const year = date.getFullYear()
+    return `${day}/${month}/${year}`
   }
 
   if (!user) return null
@@ -48,12 +66,19 @@ export default function ProfilOrganisateur({ onNavigate }: ProfileScreenProps) {
         <View style={styles.profileHeader}>
           <View style={styles.profileInfo}>
             <View style={styles.avatarContainer}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>
-                  {user.firstName[0]}
-                  {user.lastName[0]}
-                </Text>
-              </View>
+              {user.avatar ? (
+                <Image 
+                  source={{ uri: `${API_URL}${user.avatar}` }} 
+                  style={styles.avatar}
+                />
+              ) : (
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>
+                    {user.firstName[0]}
+                    {user.lastName[0]}
+                  </Text>
+                </View>
+              )}
             </View>
             <View style={styles.profileDetails}>
               <Text style={styles.profileName}>
@@ -72,21 +97,56 @@ export default function ProfilOrganisateur({ onNavigate }: ProfileScreenProps) {
           </View>
         </View>
 
-        {/* Missions Créées Section */}
+        {/* Historique des missions terminées */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Missions créées</Text>
-          {createdMissions.map((mission) => (
-            <View key={mission.id} style={styles.missionItem}>
-              <View style={[styles.missionIcon, { backgroundColor: mission.color + "20" }]}>
-                <Ionicons name="location-outline" size={24} color={mission.color} />
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <Text style={styles.sectionTitle}>Historique</Text>
+            {!loading && (
+              <View style={{ backgroundColor: '#10b98120', paddingHorizontal: 10, paddingVertical: 3, borderRadius: 12 }}>
+                <Text style={{ fontSize: 13, color: '#10b981', fontWeight: '600' }}>
+                  {finishedMissions.length} terminée{finishedMissions.length !== 1 ? 's' : ''}
+                </Text>
               </View>
-              <View style={styles.missionDetails}>
-                <Text style={styles.missionTitle}>{mission.title}</Text>
-                <Text style={styles.missionVolunteers}>{mission.volunteers} bénévoles inscrits</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color="#999" />
+            )}
+          </View>
+
+          {/* Loading */}
+          {loading && (
+            <View style={{ alignItems: 'center', paddingVertical: 24 }}>
+              <ActivityIndicator size="small" color="#10b981" />
             </View>
-          ))}
+          )}
+
+          {/* Empty state */}
+          {!loading && finishedMissions.length === 0 && (
+            <View style={{ alignItems: 'center', paddingVertical: 24 }}>
+              <Ionicons name="checkmark-circle-outline" size={40} color="#d1d5db" />
+              <Text style={{ color: '#9ca3af', marginTop: 8, fontSize: 14, textAlign: 'center' }}>
+                Aucune mission terminée pour le moment.
+              </Text>
+            </View>
+          )}
+
+          {/* Liste des missions terminées */}
+          {!loading && finishedMissions.map((mission) => {
+            const color = getCategoryColor(mission.category)
+            return (
+              <View key={mission.id} style={styles.missionItem}>
+                <View style={[styles.missionIcon, { backgroundColor: color + "20" }]}>
+                  <Ionicons name="checkmark-circle" size={24} color={color} />
+                </View>
+                <View style={styles.missionDetails}>
+                  <Text style={styles.missionTitle}>{mission.title}</Text>
+                  <Text style={styles.missionVolunteers}>
+                    Terminée le {formatDate(mission.date)} · {mission.location}
+                  </Text>
+                </View>
+                <View style={{ backgroundColor: '#10b98115', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 }}>
+                  <Text style={{ fontSize: 11, color: '#10b981', fontWeight: '600' }}>Terminée</Text>
+                </View>
+              </View>
+            )
+          })}
         </View>
 
         {/* Menu */}

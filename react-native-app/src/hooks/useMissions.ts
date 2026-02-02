@@ -8,15 +8,22 @@ import {
   updateMissionThunk,
   deleteMissionThunk,
   getMissionsNearbyThunk,
+  getMyFinishedMissionsThunk, // 👈 AJOUTER
 } from '../redux/thunks/missionsThunks';
 import { resetCreateSuccess, clearError } from '../redux/slices/missionsSlice';
 import { CreateMissionDto } from '../services/mission.service';
 
 export const useMission = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { missions, myMissions, currentMission, loading, error, createSuccess } = useSelector(
-    (state: RootState) => state.mission
-  );
+  const {
+    missions,
+    myMissions,
+    finishedMissions, // 👈 AJOUTER
+    currentMission,
+    loading,
+    error,
+    createSuccess,
+  } = useSelector((state: RootState) => state.mission);
 
   const createMission = (missionData: CreateMissionDto, imageUri?: string) => {
     return dispatch(createMissionThunk({ missionData, imageUri }));
@@ -32,6 +39,11 @@ export const useMission = () => {
 
   const getMyMissions = () => {
     return dispatch(getMyMissionsThunk());
+  };
+
+  // 👈 AJOUTER
+  const getMyFinishedMissions = () => {
+    return dispatch(getMyFinishedMissionsThunk());
   };
 
   const updateMission = (id: string, missionData: Partial<CreateMissionDto>, imageUri?: string) => {
@@ -57,6 +69,7 @@ export const useMission = () => {
   return {
     missions,
     myMissions,
+    finishedMissions, // 👈 AJOUTER
     currentMission,
     loading,
     error,
@@ -65,6 +78,7 @@ export const useMission = () => {
     getAllMissions,
     getMissionById,
     getMyMissions,
+    getMyFinishedMissions, // 👈 AJOUTER
     updateMission,
     deleteMission,
     getMissionsNearby,

@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { User } from '../../services/auth.service'
 import { loginThunk, registerThunk, logoutThunk, checkAuthThunk } from '../thunks/authThunks'
+import { updateProfileThunk, uploadAvatarThunk, getProfileThunk } from '../thunks/profileThunks' // 👈 AJOUTER
 
 interface AuthState {
   user: User | null
@@ -44,11 +45,11 @@ const authSlice = createSlice({
         state.error = null
       })
       .addCase(checkAuthThunk.rejected, (state) => {
-  state.isLoading = false
-  state.isInitialized = true
-  state.user = null
-  state.isAuthenticated = false
-})
+        state.isLoading = false
+        state.isInitialized = true
+        state.user = null
+        state.isAuthenticated = false
+      })
 
     // Login
     builder
@@ -96,6 +97,56 @@ const authSlice = createSlice({
         state.error = null
       })
       .addCase(logoutThunk.rejected, (state, action) => {
+        state.isLoading = false
+        state.error = action.payload as string
+      })
+
+    // 👇 AJOUTER TOUS CES REDUCERS POUR LE PROFIL
+
+    // Get Profile
+    builder
+      .addCase(getProfileThunk.pending, (state) => {
+        state.isLoading = true
+        state.error = null
+      })
+      .addCase(getProfileThunk.fulfilled, (state, action) => {
+        state.isLoading = false
+        state.user = action.payload
+        state.error = null
+      })
+      .addCase(getProfileThunk.rejected, (state, action) => {
+        state.isLoading = false
+        state.error = action.payload as string
+      })
+
+    // Update Profile
+    builder
+      .addCase(updateProfileThunk.pending, (state) => {
+        state.isLoading = true
+        state.error = null
+      })
+      .addCase(updateProfileThunk.fulfilled, (state, action) => {
+        state.isLoading = false
+        state.user = action.payload
+        state.error = null
+      })
+      .addCase(updateProfileThunk.rejected, (state, action) => {
+        state.isLoading = false
+        state.error = action.payload as string
+      })
+
+    // Upload Avatar
+    builder
+      .addCase(uploadAvatarThunk.pending, (state) => {
+        state.isLoading = true
+        state.error = null
+      })
+      .addCase(uploadAvatarThunk.fulfilled, (state, action) => {
+        state.isLoading = false
+        state.user = action.payload
+        state.error = null
+      })
+      .addCase(uploadAvatarThunk.rejected, (state, action) => {
         state.isLoading = false
         state.error = action.payload as string
       })

@@ -1,15 +1,17 @@
-// screens/HomeScreen.refactored.tsx
-import { useState } from "react"
+// screens/HomeScreen.tsx
+import { useState, useEffect } from "react"
 import { View, Text, TextInput, ScrollView, ActivityIndicator, RefreshControl } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import MobileHeader from "../components/MobileHeader"
 import CategoryButton from "../components/CategoryButton"
 import MissionCard from "../components/MissionCard"
-import { useMissions } from "../hooks/useMissions"
-import { colors} from "../style/theme"
+import { useMission } from "../hooks/useMissions"
+import { colors } from "../style/theme"
 import { commonStyles } from "../style/common"
 import { useAuth } from "../hooks/useAuth"
 import { styles } from '../style/benevole/HomeScreen.style'
+import { Mission } from "../services/mission.service"
+import { getImageUrl } from "../config/api.config" // ✅ Import pour les logs
 
 const categories = [
   { id: "all", icon: "📋", label: "Toutes" },
@@ -24,28 +26,71 @@ interface HomeScreenProps {
   onNavigate: (screen: string, id?: string) => void
 }
 
+// Type local pour l'affichage (seulement dans ce fichier)
+interface DisplayMission extends Mission {
+  distance?: string | number;
+  participants: number;
+}
+
 export default function HomeScreen({ onNavigate }: HomeScreenProps) {
   const { user } = useAuth()
   const [activeCategory, setActiveCategory] = useState("all")
   const [cityQuery, setCityQuery] = useState("")
+  const [refreshing, setRefreshing] = useState(false)
 
   const {
     missions,
-    isLoading,
+    loading,
     error,
-    refresh,
-  } = useMissions({
-    category: activeCategory !== "all" ? activeCategory : undefined,
-    city: cityQuery,
-  })
+    getAllMissions,
+  } = useMission()
 
-  const [refreshing, setRefreshing] = useState(false)
+  useEffect(() => {
+    getAllMissions()
+  }, [])
+
+  // ✅ Log des images pour debug
+  useEffect(() => {
+    if (missions.length > 0) {
+      console.log("📋 Total missions chargées:", missions.length);
+      missions.forEach((m, index) => {
+        const imageUrl = getImageUrl(m.image);
+        console.log(`Mission ${index + 1}:`, {
+          title: m.title,
+          imagePath: m.image,
+          fullImageUrl: imageUrl
+        });
+      });
+    }
+  }, [missions])
 
   const onRefresh = async () => {
     setRefreshing(true)
-    await refresh()
-    setRefreshing(false)
+    try {
+      await getAllMissions()
+    } catch (err) {
+      console.error("Erreur refresh:", err)
+    } finally {
+      setRefreshing(false)
+    }
   }
+
+  const filteredMissions = activeCategory === "all"
+    ? missions
+    : missions.filter((m) => m.category.toLowerCase() === activeCategory.toLowerCase())
+
+  const searchedMissions = cityQuery.trim() === ""
+    ? filteredMissions
+    : filteredMissions.filter((m) =>
+        m.location.toLowerCase().includes(cityQuery.toLowerCase())
+      )
+
+  // Préparation pour l'affichage avec type DisplayMission
+  const displayMissions: DisplayMission[] = searchedMissions.map((mission) => ({
+    ...mission,
+    participants: (mission as any).currentParticipants ?? 0,
+    distance: (mission as any).distance ?? undefined,
+  }))
 
   return (
     <View style={commonStyles.container}>
@@ -99,24 +144,24 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
           <Text style={styles.sectionTitle}>Missions près de vous</Text>
         </View>
 
-        {/* Loading State */}
-        {isLoading && !refreshing && (
+        {/* Loading */}
+        {loading && !refreshing && (
           <View style={styles.centerContainer}>
             <ActivityIndicator size="large" color={colors.primary} />
             <Text style={styles.loadingText}>Chargement des missions...</Text>
           </View>
         )}
 
-        {/* Error State */}
-        {error && (
+        {/* Erreur */}
+        {!loading && error && (
           <View style={styles.centerContainer}>
             <Ionicons name="alert-circle" size={48} color={colors.error} />
             <Text style={styles.errorText}>{error}</Text>
           </View>
         )}
 
-        {/* Empty State */}
-        {!isLoading && !error && missions.length === 0 && (
+        {/* Aucune mission trouvée */}
+        {!loading && !error && displayMissions.length === 0 && (
           <View style={styles.centerContainer}>
             <Ionicons name="search" size={48} color={colors.text.disabled} />
             <Text style={styles.emptyText}>Aucune mission trouvée</Text>
@@ -124,10 +169,10 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
           </View>
         )}
 
-        {/* Missions List */}
-        {!isLoading && !error && missions.length > 0 && (
+        {/* Liste des missions */}
+        {!loading && !error && displayMissions.length > 0 && (
           <View style={styles.missionsContainer}>
-            {missions.map((mission) => (
+            {displayMissions.map((mission) => (
               <MissionCard
                 key={mission.id}
                 mission={mission}

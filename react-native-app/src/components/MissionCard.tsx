@@ -1,27 +1,26 @@
-import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native"
-import { Ionicons } from "@expo/vector-icons"
-// Ajoute cette ligne si tu veux le type strict
-// import { ImageSourcePropType } from "react-native"
-
-interface Mission {
-  id: string
-  title: string
-  category: string
-  image: any  // ← ou ImageSourcePropType si tu importes
-  distance: string
-  date: string
-  time: string
-  participants: number
-  maxParticipants: number
-  organization: {
-    name: string
-    logo: any  // ← ou ImageSourcePropType
-  }
-}
+import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { getImageUrl } from "../config/api.config";
 
 interface MissionCardProps {
-  mission: Mission
-  onClick: () => void
+  mission: {
+    id: string;
+    title: string;
+    category: string;
+    date: string;
+    time: string;
+    location: string;
+    image?: string;
+    maxParticipants: number;
+    participants?: number;
+    organizer?: {
+      firstName?: string;
+      lastName?: string;
+      avatar?: string;
+    };
+    distance?: string | number;
+  };
+  onClick: () => void;
 }
 
 const categoryColors: Record<string, string> = {
@@ -30,16 +29,54 @@ const categoryColors: Record<string, string> = {
   Éducation: "#F97316",
   Santé: "#EF4444",
   Culture: "#A855F7",
-}
+  all: "#6B7280",
+};
 
 export default function MissionCard({ mission, onClick }: MissionCardProps) {
-  const progress = (mission.participants / mission.maxParticipants) * 100
+  const participants = mission.participants ?? 0;
+  const max = mission.maxParticipants ?? 1;
+  const progress = (participants / max) * 100;
+
+  // ✅ Nom de l'organisateur
+  const orgName =
+    mission.organizer
+      ? `${mission.organizer.firstName || ""} ${mission.organizer.lastName || ""}`.trim() || "Organisation"
+      : "Organisation";
+
+  // ✅ Avatar de l'organisateur (image ou initiale)
+  const orgAvatarUrl = mission.organizer?.avatar ? getImageUrl(mission.organizer.avatar) : null;
+  const orgInitial = orgName.charAt(0).toUpperCase() || "?";
+
+  // ✅ Image de la mission
+  const imageUri = getImageUrl(mission.image);
 
   return (
     <TouchableOpacity style={styles.card} onPress={onClick} activeOpacity={0.8}>
       <View style={styles.imageContainer}>
-        <Image source={mission.image} style={styles.image}  resizeMode="cover"/>
-        <View style={[styles.categoryBadge, { backgroundColor: categoryColors[mission.category] || "#6B7280" }]}>
+        {imageUri ? (
+          <Image
+            source={{ uri: imageUri }}
+            style={styles.image}
+            resizeMode="cover"
+            onError={(error) => {
+              console.error('❌ Erreur chargement image:', mission.title, error.nativeEvent.error);
+            }}
+            onLoad={() => {
+              console.log('✅ Image chargée:', mission.title);
+            }}
+          />
+        ) : (
+          <View style={styles.imagePlaceholder}>
+            <Ionicons name="image-outline" size={48} color="#ccc" />
+          </View>
+        )}
+
+        <View
+          style={[
+            styles.categoryBadge,
+            { backgroundColor: categoryColors[mission.category] || "#6B7280" },
+          ]}
+        >
           <Text style={styles.categoryText}>{mission.category}</Text>
         </View>
       </View>
@@ -51,104 +88,126 @@ export default function MissionCard({ mission, onClick }: MissionCardProps) {
 
         <View style={styles.details}>
           <View style={styles.detailRow}>
-            <Ionicons name="location" size={16} color="#7B68EE" />
-            <Text style={styles.detailText}>{mission.distance}</Text>
+            <Ionicons name="location-outline" size={16} color="#7B68EE" />
+            <Text style={styles.detailText}>
+              {mission.distance ?? mission.location ?? "Distance non disponible"}
+            </Text>
           </View>
 
           <View style={styles.detailRow}>
-            <Ionicons name="calendar" size={16} color="#7B68EE" />
+            <Ionicons name="calendar-outline" size={16} color="#7B68EE" />
             <Text style={styles.detailText}>{mission.date}</Text>
           </View>
 
           <View style={styles.detailRow}>
-            <Ionicons name="time" size={16} color="#7B68EE" />
+            <Ionicons name="time-outline" size={16} color="#7B68EE" />
             <Text style={styles.detailText}>{mission.time}</Text>
           </View>
 
           <View style={styles.participantsSection}>
             <View style={styles.detailRow}>
-              <Ionicons name="people" size={16} color="#7B68EE" />
+              <Ionicons name="people-outline" size={16} color="#7B68EE" />
               <Text style={styles.detailText}>
-                {mission.participants}/{mission.maxParticipants} places
+                {participants} / {max} inscrits
               </Text>
             </View>
+
             <View style={styles.progressBar}>
-              <View style={[styles.progressFill, { width: `${progress}%` }]} />
+              <View style={[styles.progressFill, { width: `${Math.min(progress, 100)}%` }]} />
             </View>
           </View>
         </View>
 
         <View style={styles.footer}>
           <View style={styles.organizationInfo}>
-            <View style={styles.orgAvatar}>
-              <Text style={styles.orgAvatarText}>{mission.organization.name[0]}</Text>
-            </View>
-            <Text style={styles.orgName}>{mission.organization.name}</Text>
+            {/* ✅ AVATAR AVEC IMAGE OU INITIALE */}
+            {orgAvatarUrl ? (
+              <Image
+                source={{ uri: orgAvatarUrl }}
+                style={styles.orgAvatarImage}
+                onError={() => console.log('❌ Erreur avatar organisateur')}
+              />
+            ) : (
+              <View style={styles.orgAvatar}>
+                <Text style={styles.orgAvatarText}>{orgInitial}</Text>
+              </View>
+            )}
+            <Text style={styles.orgName} numberOfLines={1}>
+              {orgName}
+            </Text>
           </View>
 
           <Text style={styles.detailsLink}>Voir détails →</Text>
         </View>
       </View>
     </TouchableOpacity>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
   card: {
     backgroundColor: "#fff",
     borderRadius: 16,
-    marginHorizontal: 20,
-    marginVertical: 12,
+    marginHorizontal: 16,
+    marginVertical: 10,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
+    shadowRadius: 6,
     elevation: 3,
     overflow: "hidden",
   },
   imageContainer: {
     position: "relative",
-    height: 176,
+    height: 160,
+    backgroundColor: "#E5E7EB",
   },
   image: {
     width: "100%",
     height: "100%",
   },
-
+  imagePlaceholder: {
+    width: "100%",
+    height: "100%",
+    backgroundColor: "#F3F4F6",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   categoryBadge: {
     position: "absolute",
     top: 12,
     left: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: 12,
   },
   categoryText: {
     color: "#fff",
     fontSize: 12,
-    fontWeight: "bold",
+    fontWeight: "600",
   },
   content: {
-    padding: 16,
+    padding: 14,
   },
   title: {
-    fontSize: 18,
-    fontWeight: "bold",
+    fontSize: 17,
+    fontWeight: "700",
     color: "#111827",
-    marginBottom: 12,
+    marginBottom: 10,
   },
   details: {
-    gap: 8,
+    gap: 7,
     marginBottom: 12,
   },
   detailRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 6,
   },
   detailText: {
     fontSize: 14,
     color: "#6B7280",
+    flex: 1,
   },
   participantsSection: {
     gap: 6,
@@ -163,13 +222,12 @@ const styles = StyleSheet.create({
   progressFill: {
     height: "100%",
     backgroundColor: "#7B68EE",
-    borderRadius: 3,
   },
   footer: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingTop: 12,
+    paddingTop: 10,
     borderTopWidth: 1,
     borderTopColor: "#F3F4F6",
   },
@@ -177,27 +235,37 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
+    maxWidth: "70%",
   },
+  // ✅ Avatar avec initiale (fallback)
   orgAvatar: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: "#7B68EE",
     alignItems: "center",
     justifyContent: "center",
   },
   orgAvatarText: {
     color: "#fff",
-    fontSize: 10,
+    fontSize: 14,
     fontWeight: "600",
   },
+  // ✅ Avatar avec image
+  orgAvatarImage: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#E5E7EB",
+  },
   orgName: {
-    fontSize: 12,
-    color: "#6B7280",
+    fontSize: 13,
+    color: "#4B5563",
+    fontWeight: "500",
   },
   detailsLink: {
     fontSize: 14,
     color: "#7B68EE",
-    fontWeight: "500",
+    fontWeight: "600",
   },
-})
+});

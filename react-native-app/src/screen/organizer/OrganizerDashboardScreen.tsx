@@ -19,7 +19,7 @@ import { useAuth } from "../../hooks/useAuth"
 import { useState, useRef, useEffect } from "react"
 import { styles } from '../../style/organizer/OrganizerDashboardScreen.style'
 import { useMission } from '../../hooks/useMissions'
-import API_BASE_URL from '../../config/baseUrl'
+import { getImageUrl } from '../../config/api.config'
 
 interface OrganizerDashboardScreenProps {
   onNavigate: (screen: string, params?: any) => void
@@ -37,9 +37,37 @@ interface VolunteerMessage {
   }>
 }
 
+// Définition du type Mission pour le dashboard
+interface MissionWithParticipants {
+  id: string
+  title: string
+  image?: string
+  category: string
+  status: string
+  maxParticipants: number
+  date: string
+  location?: string
+  participants?: number  // Nombre actuel de participants
+  currentParticipants?: number  // Alternative pour compatibilité
+}
+
 function formatDate(dateStr: string): string {
   const date = new Date(dateStr)
   return date.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })
+}
+
+// Retourne couleur + label selon le statut
+function getStatusStyle(status: string): { color: string; label: string } {
+  switch (status) {
+    case 'active':
+      return { color: '#3b82f6', label: 'Actif' }
+    case 'complete':
+      return { color: '#f59e0b', label: 'Complète' }
+    case 'finished':
+      return { color: '#6b7280', label: 'Terminée' }
+    default:
+      return { color: '#3b82f6', label: 'Actif' }
+  }
 }
 
 export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashboardScreenProps) {
@@ -73,6 +101,13 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
       }
     }
   }, [])
+
+  // ⭐ CALCULER LE TOTAL DE BÉNÉVOLES INSCRITS
+  const totalVolunteers = myMissions.reduce((total, mission: any) => {
+    // Essayer d'abord participants, puis currentParticipants, sinon 0
+    const participants = mission.participants || mission.currentParticipants || 0
+    return total + participants
+  }, 0)
 
   const missionVolunteerMessages: { [key: string]: VolunteerMessage[] } = {}
   const totalUnreadMessages = 0
@@ -126,7 +161,6 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
     }, 100)
   }
 
-  // Fonction de suppression avec confirmation
   const handleDeleteMission = async (missionId: string, missionTitle: string) => {
     Alert.alert(
       'Confirmer la suppression',
@@ -141,12 +175,7 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
           style: 'destructive',
           onPress: async () => {
             try {
-              console.log('🗑️ Suppression de la mission:', missionId)
-              
-              // Appel du thunk Redux pour supprimer
               const result = await deleteMission(missionId)
-              
-              // Vérifier si la suppression a réussi
               if (result.meta.requestStatus === 'fulfilled') {
                 Alert.alert('Succès', 'Mission supprimée avec succès')
               } else {
@@ -161,20 +190,6 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
       ],
       { cancelable: true }
     )
-  }
-
-  // Fonction helper pour construire l'URL de l'image
-  const getImageUri = (imageUrl: string | null | undefined): string | null => {
-    if (!imageUrl) return null
-    
-    // Si l'URL commence par http/https, c'est déjà une URL complète
-    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-      return imageUrl
-    }
-    
-    // Sinon, construire l'URL avec le base URL
-    const separator = imageUrl.startsWith('/') ? '' : '/'
-    return `${API_BASE_URL}${separator}${imageUrl}`
   }
 
   const currentMission = myMissions.find((m) => m.id === selectedMissionId)
@@ -219,7 +234,8 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
               <View style={styles.statIconContainer}>
                 <Ionicons name="people-outline" size={24} color="#10b981" />
               </View>
-              <Text style={styles.statValue}>0</Text>
+              {/* ⭐ AFFICHAGE DU TOTAL DE BÉNÉVOLES */}
+              <Text style={styles.statValue}>{totalVolunteers}</Text>
               <Text style={styles.statLabel}>Bénévoles</Text>
             </View>
             <View style={styles.statCard}>
@@ -260,14 +276,14 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
           {/* Liste des missions */}
           {!loading && (
             <View style={styles.missionsList}>
-              {myMissions.slice(0, 3).map((mission) => {
-                const imageUri = getImageUri(mission.image)
+              {myMissions.slice(0, 3).map((mission: any) => {
+                const imageUri = getImageUrl(mission.image)
+                const statusStyle = getStatusStyle(mission.status)
                 
-                // Debug: afficher les URLs dans la console
-                console.log('Mission:', mission.title)
-                console.log('Image brute:', mission.image)
-                console.log('Image URI construite:', imageUri)
-                
+                // ⭐ RÉCUPÉRER LE NOMBRE DE PARTICIPANTS - Comme dans HomeScreen
+                // Essayer d'abord participants, puis currentParticipants, sinon 0
+                const currentParticipants = mission.participants || mission.currentParticipants || 0
+
                 return (
                   <View key={mission.id} style={styles.missionCard}>
 
@@ -278,12 +294,10 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
                         style={styles.missionImage}
                         resizeMode="cover"
                         onError={(error) => {
-                          console.error('❌ Erreur chargement image pour:', mission.title)
-                          console.error('URL:', imageUri)
-                          console.error('Erreur:', error.nativeEvent.error)
+                          console.error('❌ Erreur chargement image pour:', mission.title, error.nativeEvent.error)
                         }}
                         onLoad={() => {
-                          console.log('✅ Image chargée avec succès:', mission.title)
+                          console.log('✅ Image chargée pour:', mission.title)
                         }}
                       />
                     ) : (
@@ -292,7 +306,7 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
                       </View>
                     )}
 
-                    {/* Titre + Status */}
+                    {/* Titre + Status dynamique selon mission.status */}
                     <View style={styles.missionHeader}>
                       <View style={styles.missionTitleContainer}>
                         <Text style={styles.missionTitle}>{mission.title}</Text>
@@ -300,8 +314,8 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
                           <Text style={styles.categoryText}>{mission.category}</Text>
                         </View>
                       </View>
-                      <View style={[styles.statusBadge, { backgroundColor: "#3b82f6" }]}>
-                        <Text style={styles.statusText}>Actif</Text>
+                      <View style={[styles.statusBadge, { backgroundColor: statusStyle.color }]}>
+                        <Text style={styles.statusText}>{statusStyle.label}</Text>
                       </View>
                     </View>
 
@@ -309,7 +323,10 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
                     <View style={styles.missionInfo}>
                       <View style={styles.infoItem}>
                         <Ionicons name="people-outline" size={16} color="#666" />
-                        <Text style={styles.infoText}>0/{mission.maxParticipants}</Text>
+                        {/* ⭐ AFFICHAGE DU NOMBRE RÉEL DE PARTICIPANTS - Comme dans HomeScreen */}
+                        <Text style={styles.infoText}>
+                          {currentParticipants}/{mission.maxParticipants}
+                        </Text>
                       </View>
                       <View style={styles.infoItem}>
                         <Ionicons name="calendar-outline" size={16} color="#666" />
@@ -327,16 +344,12 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
                     <View style={styles.actions}>
                       <TouchableOpacity 
                         style={styles.editButton} 
-                        onPress={() => {
-                          console.log('🔧 Modifier mission ID:', mission.id)
-                          onNavigate("edit-mission", { missionId: mission.id })
-                        }}
+                        onPress={() => onNavigate("edit-mission", { missionId: mission.id })}
                       >
                         <Ionicons name="create-outline" size={16} color="#666" />
                         <Text style={styles.editButtonText}>Modifier</Text>
                       </TouchableOpacity>
                       
-                      {/* Bouton Supprimer avec confirmation */}
                       <TouchableOpacity 
                         style={styles.deleteButton}
                         onPress={() => handleDeleteMission(mission.id, mission.title)}

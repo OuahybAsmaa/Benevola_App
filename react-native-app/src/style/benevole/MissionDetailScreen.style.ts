@@ -1,5 +1,6 @@
-import { StyleSheet ,Platform,StatusBar, } from 'react-native';
+import { StyleSheet, Platform, StatusBar } from 'react-native';
 import { colors, spacing, fontSize, fontWeight, borderRadius, shadows } from "../../style/theme"
+
 export const styles = StyleSheet.create({
   centerContainer: {
     flex: 1,
@@ -82,44 +83,65 @@ export const styles = StyleSheet.create({
     padding: spacing.xl,
   },
   
+  // ✅ SECTION ORGANISATION - VERSION FINALE
   organizationRow: {
     flexDirection: "row",
-    marginBottom: spacing.lg,
+    alignItems: "center",
+    marginBottom: 20,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F3F4F6",
   },
   
+  // Avatar avec initiale (fallback)
   orgAvatar: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: colors.primary,
+    backgroundColor: "#7B68EE",
     alignItems: "center",
     justifyContent: "center",
-    marginRight: spacing.md,
+    marginRight: 16, // ✅ ESPACEMENT
   },
   
   orgAvatarText: {
-    color: colors.text.inverse,
-    fontWeight: fontWeight.bold,
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "600",
   },
   
+  // ✅ Avatar avec image
+  orgAvatarImage: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#E5E7EB",
+    marginRight: 16, // ✅ ESPACEMENT
+  },
+  
+  // Infos organisateur
   orgInfo: {
     flex: 1,
+    justifyContent: "center",
   },
   
   orgNameRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.sm,
+    gap: 6,
+    marginBottom: 4,
   },
   
   orgName: {
-    fontWeight: fontWeight.semibold,
-    color: colors.text.primary,
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#111827",
   },
   
   orgVerified: {
-    fontSize: fontSize.sm,
-    color: colors.text.secondary,
+    fontSize: 13,
+    color: "#6B7280",
+    marginTop: 2, // ✅ PETIT ESPACE ENTRE NOM ET "ORGANISATEUR"
   },
   
   title: {
@@ -265,7 +287,7 @@ export const styles = StyleSheet.create({
     flex: 1,
   },
 
-  // Conversation Styles - CORRIGÉ POUR MOINS D'ESPACE
+  // Conversation Styles
   conversationContainer: {
     flex: 1,
   },
@@ -275,7 +297,7 @@ export const styles = StyleSheet.create({
   },
   
   messagesContentContainer: {
-    paddingHorizontal: 12, // Réduit de 16 à 12
+    paddingHorizontal: 12,
     paddingVertical: 12,
   },
   
@@ -293,11 +315,11 @@ export const styles = StyleSheet.create({
     color: "#666",
   },
 
-  // Styles pour les messages avec avatars - CORRIGÉ POUR MOINS D'ESPACE
+  // Styles pour les messages avec avatars
   messageContainer: {
     flexDirection: "row",
     alignItems: "flex-end",
-    marginBottom: 8, // Seulement en bas
+    marginBottom: 8,
   },
 
   messageContainerRight: {
@@ -306,7 +328,7 @@ export const styles = StyleSheet.create({
 
   avatarContainer: {
     width: 36,
-    marginHorizontal: 6, // Réduit
+    marginHorizontal: 6,
   },
 
   avatar: {
@@ -320,7 +342,7 @@ export const styles = StyleSheet.create({
   },
 
   volunteerAvatar: {
-    backgroundColor: "#10b981", // Vert pour le bénévole
+    backgroundColor: "#10b981",
   },
 
   avatarText: {
@@ -330,15 +352,15 @@ export const styles = StyleSheet.create({
   },
 
   messageBubble: {
-    maxWidth: "76%", // Augmenté pour utiliser plus d'espace
+    maxWidth: "76%",
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 16,
-    minHeight: 44, // Hauteur minimale
+    minHeight: 44,
   },
 
   messageVolunteer: {
-    backgroundColor: "#7B68EE", // Violet pour le bénévole
+    backgroundColor: "#7B68EE",
     borderBottomRightRadius: 6,
   },
 
@@ -416,4 +438,4 @@ export const styles = StyleSheet.create({
   replyButtonDisabled: {
     backgroundColor: "#d1d5db",
   },
-})
+});

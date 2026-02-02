@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { MissionsModule } from './missions/missions.module'; // AJOUT
+import { ProfileModule } from './profile/profile.module';
+import { MissionParticipantsModule } from './mission-participants/mission-participants.module';
 
 @Module({
   imports: [
@@ -17,7 +19,9 @@ import { MissionsModule } from './missions/missions.module'; // AJOUT
       logging: true,
     }),
     AuthModule,
-    MissionsModule, // AJOUT
+    MissionsModule,
+    ProfileModule, // AJOUT
+    MissionParticipantsModule,
   ],
 })
 export class AppModule {}

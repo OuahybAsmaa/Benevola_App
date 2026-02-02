@@ -87,3 +87,15 @@ export const getMissionsNearbyThunk = createAsyncThunk(
     }
   }
 );
+
+export const getMyFinishedMissionsThunk = createAsyncThunk(
+  'mission/getMyFinished',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await missionService.getMyFinishedMissions();
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || "Erreur lors de la récupération de l'historique");
+    }
+  }
+);
