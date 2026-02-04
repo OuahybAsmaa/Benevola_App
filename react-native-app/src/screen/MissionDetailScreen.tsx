@@ -13,10 +13,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { useMission } from "../hooks/useMissions";
 import { useMissionParticipant } from "../hooks/useMissionParticipant";
 import { useAuth } from "../hooks/useAuth";
-import MobileHeader from "../components/MobileHeader"; // Ajout du MobileHeader
+import MobileHeader from "../components/MobileHeader";
 import { styles } from "../style/benevole/MissionDetailScreen.style";
 import { colors } from "../style/theme";
-import { getImageUrl } from "../config/api.config"; // Import pour les URLs d'images
+import { getImageUrl } from "../config/api.config";
 
 // ⭐ PROPS PERSONNALISÉES (pas de React Navigation)
 interface MissionDetailScreenProps {
@@ -140,22 +140,41 @@ const MissionDetailScreen: React.FC<MissionDetailScreenProps> = ({
     );
   };
 
+  // ⭐ NOUVELLE FONCTION : Ouvrir la messagerie avec l'organisateur
+  const handleOpenMessaging = () => {
+    if (!user) {
+      Alert.alert(
+        "Connexion requise",
+        "Vous devez être connecté pour envoyer un message",
+        [
+          { text: "Annuler", style: "cancel" },
+          { 
+            text: "Se connecter", 
+            onPress: () => onNavigate("login") 
+          },
+        ]
+      );
+      return;
+    }
+
+    onNavigate("messaging", {
+      organizerId: mission.organizerId,
+      organizerName: `${mission.organizer?.firstName} ${mission.organizer?.lastName}`,
+      missionId: mission.id,
+      missionTitle: mission.title,
+    });
+  };
+
   // Affichage du chargement
-  if (missionLoading && !currentMission) {
-    return (
-      <View style={styles.centerContainer}>
-        <MobileHeader 
-          title="Chargement" 
-          showBack 
-          onBack={navigation.goBack}
-        />
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Chargement...</Text>
-        </View>
-      </View>
-    );
-  }
+  // Affichage du chargement
+if (missionLoading && !currentMission) {
+  return (
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <ActivityIndicator size="large" color={colors.primary} />
+      <Text style={styles.loadingText}>Chargement...</Text>
+    </View>
+  );
+}
 
   // Affichage erreur
   if (!currentMission) {
@@ -203,33 +222,35 @@ const MissionDetailScreen: React.FC<MissionDetailScreenProps> = ({
 
       <ScrollView style={{ flex: 1 }}>
         {/* Image de la mission */}
-        <View style={styles.imageContainer}>
-          <Image
-            source={
-              missionImageUrl
-                ? { uri: missionImageUrl }
-                : require("../../assets/default-mission.png")
-            }
-            style={styles.image}
-            resizeMode="cover"
-          />
+       {/* Image de la mission */}
+<View style={styles.imageContainer}>
+  <Image
+    source={
+      missionImageUrl
+        ? { uri: missionImageUrl }
+        : require("../../assets/default-mission.png")
+    }
+    style={styles.image}
+    resizeMode="cover"
+  />
 
-          {/* Badge catégorie */}
-          <View style={styles.categoryBadge}>
-            <Text style={styles.categoryText}>{mission.category}</Text>
-          </View>
+  {/* Badge catégorie */}
+  <View style={styles.categoryBadge}>
+    <Text style={styles.categoryText}>{mission.category}</Text>
+  </View>
 
-          {/* Actions (partage, favoris) */}
-          <View style={styles.imageActions}>
-            <TouchableOpacity style={styles.actionButton}>
-              <Ionicons name="share-outline" size={24} color={colors.text.primary} />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton}>
-              <Ionicons name="heart-outline" size={24} color={colors.text.primary} />
-            </TouchableOpacity>
-          </View>
-        </View>
-
+  {/* ⭐ Actions - MODIFIÉ: uniquement messagerie */}
+  <View style={styles.imageActions}>
+    {!isOrganizer && (
+      <TouchableOpacity 
+        style={styles.actionButton}
+        onPress={handleOpenMessaging}
+      >
+        <Ionicons name="chatbubble-outline" size={24} color={colors.text.primary} />
+      </TouchableOpacity>
+    )}
+  </View>
+</View>
         {/* Contenu de la mission */}
         <View style={styles.detailsContainer}>
           {/* Organisation */}

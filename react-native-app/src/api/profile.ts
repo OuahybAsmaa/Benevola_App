@@ -1,6 +1,6 @@
+// src/api/profile.ts
 import axios from 'axios';
-
-const API_URL = 'http://192.168.0.105:3000'; // 👈 CHANGEZ CETTE IP
+import API_BASE_URL from '../config/baseUrl'; // 👈 Import de l'URL de base
 
 export interface UpdateProfileData {
   firstName?: string;
@@ -11,7 +11,7 @@ export interface UpdateProfileData {
 export const profileAPI = {
   updateProfile: async (data: UpdateProfileData, token: string) => {
     const response = await axios.put(
-      `${API_URL}/profile`,
+      `${API_BASE_URL}/profile`, // 👈 Utilise API_BASE_URL
       data,
       {
         headers: {
@@ -36,7 +36,7 @@ export const profileAPI = {
     } as any);
 
     const response = await axios.post(
-      `${API_URL}/profile/avatar`,
+      `${API_BASE_URL}/profile/avatar`, // 👈 Utilise API_BASE_URL
       formData,
       {
         headers: {
@@ -50,7 +50,7 @@ export const profileAPI = {
 
   getProfile: async (token: string) => {
     const response = await axios.get(
-      `${API_URL}/profile`,
+      `${API_BASE_URL}/profile`, // 👈 Utilise API_BASE_URL
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -60,3 +60,6 @@ export const profileAPI = {
     return response.data;
   },
 };
+
+// Optionnel : export par défaut pour compatibilité
+export default profileAPI;

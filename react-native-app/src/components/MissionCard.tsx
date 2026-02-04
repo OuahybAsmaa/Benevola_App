@@ -13,14 +13,23 @@ interface MissionCardProps {
     image?: string;
     maxParticipants: number;
     participants?: number;
+    currentParticipants?: number; // 🔥 AJOUTÉ depuis le backend
     organizer?: {
       firstName?: string;
       lastName?: string;
       avatar?: string;
     };
-    distance?: string | number;
+    distance?: string | number; // 🔥 Distance depuis le backend (en mètres)
+    position?: {
+      type: string;
+      coordinates: [number, number]; // [longitude, latitude]
+    };
   };
   onClick: () => void;
+  userLocation?: { // 🔥 AJOUTÉ pour calcul côté client
+    latitude: number;
+    longitude: number;
+  } | null;
 }
 
 const categoryColors: Record<string, string> = {
@@ -32,8 +41,9 @@ const categoryColors: Record<string, string> = {
   all: "#6B7280",
 };
 
-export default function MissionCard({ mission, onClick }: MissionCardProps) {
-  const participants = mission.participants ?? 0;
+export default function MissionCard({ mission, onClick, userLocation }: MissionCardProps) {
+  // ✅ Nombre de participants (priorité à currentParticipants du backend)
+  const participants = mission.currentParticipants ?? mission.participants ?? 0;
   const max = mission.maxParticipants ?? 1;
   const progress = (participants / max) * 100;
 
@@ -49,6 +59,62 @@ export default function MissionCard({ mission, onClick }: MissionCardProps) {
 
   // ✅ Image de la mission
   const imageUri = getImageUrl(mission.image);
+
+  // 🔥 FONCTION POUR FORMATER LA DISTANCE
+  const formatDistance = (distanceInMeters: number): string => {
+    if (distanceInMeters < 1000) {
+      return `${Math.round(distanceInMeters)} m`;
+    } else {
+      return `${(distanceInMeters / 1000).toFixed(1)} km`;
+    }
+  };
+
+  // 🔥 CALCULER LA DISTANCE
+  const getDistance = (): string | null => {
+    // Si la mission retourne déjà une distance depuis le backend
+    if (typeof mission.distance === 'number') {
+      return formatDistance(mission.distance);
+    }
+
+    // Si la distance est déjà formatée en string
+    if (typeof mission.distance === 'string' && mission.distance !== mission.location) {
+      return mission.distance;
+    }
+
+    // Sinon, calculer côté client si on a la position de l'utilisateur et de la mission
+    if (!userLocation || !mission.position?.coordinates) {
+      return null;
+    }
+
+    const [missionLng, missionLat] = mission.position.coordinates;
+    const distanceInMeters = calculateDistance(
+      userLocation.latitude,
+      userLocation.longitude,
+      missionLat,
+      missionLng
+    );
+
+    return formatDistance(distanceInMeters);
+  };
+
+  // 🔥 FORMULE DE HAVERSINE pour calculer la distance entre deux points GPS
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371e3; // Rayon de la Terre en mètres
+    const φ1 = (lat1 * Math.PI) / 180;
+    const φ2 = (lat2 * Math.PI) / 180;
+    const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+    const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+
+    const a =
+      Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+      Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c; // Distance en mètres
+  };
+
+  const distanceText = getDistance();
 
   return (
     <TouchableOpacity style={styles.card} onPress={onClick} activeOpacity={0.8}>
@@ -87,10 +153,14 @@ export default function MissionCard({ mission, onClick }: MissionCardProps) {
         </Text>
 
         <View style={styles.details}>
+          {/* 🔥 LOCALISATION AVEC DISTANCE */}
           <View style={styles.detailRow}>
             <Ionicons name="location-outline" size={16} color="#7B68EE" />
-            <Text style={styles.detailText}>
-              {mission.distance ?? mission.location ?? "Distance non disponible"}
+            <Text style={styles.detailText} numberOfLines={1}>
+              {mission.location}
+              {distanceText && (
+                <Text style={styles.distanceText}> • {distanceText}</Text>
+              )}
             </Text>
           </View>
 
@@ -209,6 +279,11 @@ const styles = StyleSheet.create({
     color: "#6B7280",
     flex: 1,
   },
+  // 🔥 STYLE POUR LA DISTANCE (en gras et couleur primaire)
+  distanceText: {
+    fontWeight: "600",
+    color: "#7B68EE",
+  },
   participantsSection: {
     gap: 6,
   },
@@ -237,7 +312,6 @@ const styles = StyleSheet.create({
     gap: 8,
     maxWidth: "70%",
   },
-  // ✅ Avatar avec initiale (fallback)
   orgAvatar: {
     width: 32,
     height: 32,
@@ -251,7 +325,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
-  // ✅ Avatar avec image
   orgAvatarImage: {
     width: 32,
     height: 32,

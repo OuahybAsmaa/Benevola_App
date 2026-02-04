@@ -20,6 +20,8 @@ import { useState, useRef, useEffect } from "react"
 import { styles } from '../../style/organizer/OrganizerDashboardScreen.style'
 import { useMission } from '../../hooks/useMissions'
 import { getImageUrl } from '../../config/api.config'
+// ⭐ AJOUT: Import du hook useNotifications
+import { useNotifications } from "../../hooks/useNotifications"
 
 interface OrganizerDashboardScreenProps {
   onNavigate: (screen: string, params?: any) => void
@@ -73,6 +75,8 @@ function getStatusStyle(status: string): { color: string; label: string } {
 export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashboardScreenProps) {
   const { user } = useAuth()
   const { myMissions, getMyMissions, deleteMission, loading } = useMission()
+  // ⭐ AJOUT: Récupérer les vraies notifications
+  const { unreadCount: notificationUnreadCount, notifications } = useNotifications()
 
   const [showMessagingModal, setShowMessagingModal] = useState(false)
   const [selectedMissionId, setSelectedMissionId] = useState<string | null>(null)
@@ -81,9 +85,127 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
   const [keyboardHeight, setKeyboardHeight] = useState(0)
   const scrollViewRef = useRef<ScrollView>(null)
 
+  // ⭐ AJOUT: Messages mockés pour tester
+  const [mockMessages, setMockMessages] = useState<{ [key: string]: VolunteerMessage[] }>({})
+  
+  // ⭐ AJOUT: Calculer les messages non lus (mocké pour l'instant)
+  const [totalUnreadMessages, setTotalUnreadMessages] = useState(0)
+
   useEffect(() => {
     getMyMissions()
   }, [])
+
+  // ⭐ AJOUT: Initialiser les messages mockés quand les missions sont chargées
+  useEffect(() => {
+    if (myMissions.length > 0 && Object.keys(mockMessages).length === 0) {
+      const newMockData: { [key: string]: VolunteerMessage[] } = {}
+      
+      // Générer des messages mockés pour chaque mission existante
+      myMissions.forEach((mission: any) => {
+        const volunteers: VolunteerMessage[] = [
+          {
+            id: "vol1",
+            volunteerName: "Marie Dubois",
+            volunteerAvatar: "MD",
+            messages: [
+              {
+                id: "1",
+                sender: "volunteer",
+                content: "Bonjour, je suis intéressé par votre mission !",
+                timestamp: "09:30"
+              },
+              {
+                id: "2",
+                sender: "organizer",
+                content: "Bonjour Marie, ravi de votre intérêt !",
+                timestamp: "10:15"
+              },
+              {
+                id: "3",
+                sender: "volunteer",
+                content: "Quel est l'horaire exact pour samedi ?",
+                timestamp: "11:00"
+              }
+            ]
+          },
+          {
+            id: "vol2",
+            volunteerName: "Jean Martin",
+            volunteerAvatar: "JM",
+            messages: [
+              {
+                id: "1",
+                sender: "volunteer",
+                content: "J'ai une question sur l'équipement nécessaire",
+                timestamp: "Hier 14:20"
+              },
+              {
+                id: "2",
+                sender: "organizer",
+                content: "Bonjour Jean, tout le matériel est fourni sur place",
+                timestamp: "Hier 16:45"
+              }
+            ]
+          },
+          {
+            id: "vol3",
+            volunteerName: "Sophie Laurent",
+            volunteerAvatar: "SL",
+            messages: [
+              {
+                id: "1",
+                sender: "organizer",
+                content: "Bonjour Sophie, merci pour votre inscription !",
+                timestamp: "Lundi 09:00"
+              },
+              {
+                id: "2",
+                sender: "volunteer",
+                content: "Avec plaisir ! Je suis impatiente de participer",
+                timestamp: "Lundi 10:30"
+              },
+              {
+                id: "3",
+                sender: "volunteer",
+                content: "Est-ce que je peux amener un ami ?",
+                timestamp: "Lundi 15:20"
+              },
+              {
+                id: "4",
+                sender: "organizer",
+                content: "Bien sûr, il suffit qu'il s'inscrive aussi",
+                timestamp: "Mardi 08:45"
+              }
+            ]
+          }
+        ]
+        
+        newMockData[mission.id] = volunteers
+      })
+      
+      setMockMessages(newMockData)
+    }
+  }, [myMissions])
+
+  // ⭐ AJOUT: Filtrer les vraies notifications de type 'message'
+  const messageNotifications = notifications.filter(
+    n => n.type === 'message' && !n.isRead
+  )
+
+  // ⭐ AJOUT: Mettre à jour les messages non lus mockés (gardé pour compatibilité)
+  useEffect(() => {
+    let totalUnread = 0
+    
+    myMissions.forEach((mission: any) => {
+      if (mockMessages[mission.id]) {
+        // Simuler quelques messages non lus (1-3 par mission)
+        const randomUnread = Math.floor(Math.random() * 3) + 1
+        totalUnread += randomUnread
+      }
+    })
+    
+    setTotalUnreadMessages(totalUnread)
+  }, [myMissions, mockMessages])
 
   useEffect(() => {
     if (Platform.OS === "android") {
@@ -109,13 +231,13 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
     return total + participants
   }, 0)
 
-  const missionVolunteerMessages: { [key: string]: VolunteerMessage[] } = {}
-  const totalUnreadMessages = 0
-
-  const handleOpenMessages = (missionId: string) => {
-    setSelectedMissionId(missionId)
-    setSelectedVolunteer(null)
-    setShowMessagingModal(true)
+  // ⭐ MODIFICATION: Naviguer vers l'écran de messagerie dédié
+  const handleOpenMessages = (missionId: string, missionTitle: string) => {
+    // Naviguer vers l'écran de messagerie organisateur
+    onNavigate("organizer-messaging", { 
+      missionId, 
+      missionTitle 
+    })
   }
 
   const handleCloseMessages = () => {
@@ -149,10 +271,15 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
       messages: [...selectedVolunteer.messages, newMessage],
     }
 
-    missionVolunteerMessages[selectedMissionId] = missionVolunteerMessages[selectedMissionId].map((v) =>
-      v.id === selectedVolunteer.id ? updatedVolunteer : v
-    )
+    // ⭐ MODIFICATION: Mettre à jour l'état mockMessages
+    const updatedMockMessages = {
+      ...mockMessages,
+      [selectedMissionId]: mockMessages[selectedMissionId].map((v) =>
+        v.id === selectedVolunteer.id ? updatedVolunteer : v
+      )
+    }
 
+    setMockMessages(updatedMockMessages)
     setSelectedVolunteer(updatedVolunteer)
     setMessageText("")
 
@@ -161,39 +288,62 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
     }, 100)
   }
 
-  const handleDeleteMission = async (missionId: string, missionTitle: string) => {
+  const handleDeleteMission = (missionId: string, missionTitle: string) => {
+  Alert.alert(
+    'Confirmer la suppression',
+    `Voulez-vous vraiment supprimer "${missionTitle}" ?`,
+    [
+      { text: 'Annuler', style: 'cancel' },
+      {
+        text: 'Supprimer',
+        style: 'destructive',
+       onPress: async () => {
+  try {
+    await deleteMission(missionId).unwrap();
+
     Alert.alert(
-      'Confirmer la suppression',
-      `Êtes-vous sûr de vouloir supprimer la mission "${missionTitle}" ?`,
-      [
-        {
-          text: 'Annuler',
-          style: 'cancel',
-        },
-        {
-          text: 'Supprimer',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const result = await deleteMission(missionId)
-              if (result.meta.requestStatus === 'fulfilled') {
-                Alert.alert('Succès', 'Mission supprimée avec succès')
-              } else {
-                Alert.alert('Erreur', 'Impossible de supprimer la mission')
-              }
-            } catch (error: any) {
-              console.error('Erreur suppression:', error)
-              Alert.alert('Erreur', error.message || 'Une erreur est survenue')
-            }
-          },
-        },
-      ],
+      'Succès',
+      'Mission supprimée avec succès',
+      [{ text: 'OK', style: 'default' }]
+    );
+
+    getMyMissions(); // recharge la liste
+
+  } catch (err: any) {
+    // ─── PARTIE TRÈS IMPORTANTE ───
+    console.log('Détails erreur complète :', JSON.stringify(err, null, 2));
+
+    // Récupère le message de la façon la plus robuste possible
+    let errorMessage = 'Une erreur inconnue est survenue';
+
+    if (err?.payload?.message) {
+      errorMessage = err.payload.message;
+    } else if (err?.data?.message) {
+      errorMessage = err.data.message;
+    } else if (err?.message) {
+      errorMessage = err.message;
+    } else if (typeof err === 'string') {
+      errorMessage = err;
+    }
+
+    // Force l'affichage avec un titre clair + le message exact
+    Alert.alert(
+      'Impossible de supprimer la mission',
+      errorMessage,
+      [{ text: 'OK', style: 'default' }],
       { cancelable: true }
-    )
+    );
   }
+},
+      },
+    ],
+    { cancelable: true }
+  );
+};
 
   const currentMission = myMissions.find((m) => m.id === selectedMissionId)
-  const currentVolunteers = selectedMissionId ? missionVolunteerMessages[selectedMissionId] || [] : []
+  // ⭐ MODIFICATION: Utiliser mockMessages
+  const currentVolunteers = selectedMissionId ? mockMessages[selectedMissionId] || [] : []
 
   return (
     <View style={styles.container}>
@@ -201,7 +351,8 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
         title=""
         showProfile
         showNotifications
-        notificationCount={3 + totalUnreadMessages}
+        // ⭐ MODIFICATION: Utiliser le vrai compteur de notifications non lues
+        notificationCount={notificationUnreadCount}
         user={{
           firstName: user?.firstName || "Organisateur",
           lastName: user?.lastName || "",
@@ -242,17 +393,15 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
               <View style={styles.statIconContainer}>
                 <Ionicons name="mail-outline" size={24} color="#f59e0b" />
               </View>
-              <Text style={styles.statValue}>{totalUnreadMessages}</Text>
+              {/* ⭐ MODIFICATION: Utiliser les vraies notifications de message non lues */}
+              <Text style={styles.statValue}>{messageNotifications.length}</Text>
               <Text style={styles.statLabel}>Messages</Text>
             </View>
           </View>
 
           {/* Section Missions */}
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Vos Missions</Text>
-            <TouchableOpacity onPress={() => onNavigate("organizer-missions")}>
-              <Text style={styles.viewAll}>Voir tout</Text>
-            </TouchableOpacity>
+               <Text style={styles.sectionTitle}>Vos Missions</Text>
           </View>
 
           {/* Loading */}
@@ -276,13 +425,26 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
           {/* Liste des missions */}
           {!loading && (
             <View style={styles.missionsList}>
-              {myMissions.slice(0, 3).map((mission: any) => {
+              {myMissions.map((mission: any) => {
                 const imageUri = getImageUrl(mission.image)
                 const statusStyle = getStatusStyle(mission.status)
                 
                 // ⭐ RÉCUPÉRER LE NOMBRE DE PARTICIPANTS - Comme dans HomeScreen
                 // Essayer d'abord participants, puis currentParticipants, sinon 0
                 const currentParticipants = mission.participants || mission.currentParticipants || 0
+
+                // ⭐ AJOUT: Récupérer les messages mockés pour cette mission
+                const missionMessages = mockMessages[mission.id] || []
+                const unreadCount = missionMessages.length > 0 
+                  ? Math.min(missionMessages.length, 3) // Simulation: 1-3 messages non lus
+                  : 0
+
+                // ⭐ AJOUT: Filtrer les notifications de message pour cette mission spécifique
+                const missionMessageNotifications = notifications.filter(
+                  n => n.type === 'message' && 
+                       n.data?.missionId === mission.id && 
+                       !n.isRead
+                )
 
                 return (
                   <View key={mission.id} style={styles.missionCard}>
@@ -340,8 +502,25 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
                       )}
                     </View>
 
-                    {/* Actions */}
+                    {/* ⭐ Actions avec BOUTON MESSAGES */}
                     <View style={styles.actions}>
+                      {/* ⭐ BOUTON MESSAGES - MODIFICATION ICI */}
+                      <TouchableOpacity 
+                        style={styles.messagesButton}
+                        onPress={() => handleOpenMessages(mission.id, mission.title)}
+                      >
+                        <Ionicons name="chatbubble-outline" size={16} color="#7B68EE" />
+                        <Text style={styles.messagesButtonText}>Messages</Text>
+                        {/* ⭐ MODIFICATION: Badge avec les vraies notifications de message */}
+                        {missionMessageNotifications.length > 0 && (
+                          <View style={styles.messageBadge}>
+                            <Text style={styles.messageBadgeText}>
+                              {missionMessageNotifications.length}
+                            </Text>
+                          </View>
+                        )}
+                      </TouchableOpacity>
+                      
                       <TouchableOpacity 
                         style={styles.editButton} 
                         onPress={() => onNavigate("edit-mission", { missionId: mission.id })}
@@ -370,135 +549,7 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
         <Ionicons name="add" size={32} color="white" />
       </TouchableOpacity>
 
-      {/* Messaging Modal */}
-      <Modal
-        visible={showMessagingModal}
-        animationType="slide"
-        transparent={false}
-        onRequestClose={handleCloseMessages}
-      >
-        <View style={styles.modalContainer}>
-          <StatusBar backgroundColor="#fff" barStyle="dark-content" />
-
-          <View style={styles.customHeader}>
-            <TouchableOpacity
-              onPress={() => (selectedVolunteer ? setSelectedVolunteer(null) : handleCloseMessages())}
-              style={styles.backButton}
-            >
-              <Ionicons name="chevron-back" size={24} color="#374151" />
-            </TouchableOpacity>
-
-            <View style={styles.headerContent}>
-              <Text style={styles.headerTitle}>
-                {selectedVolunteer ? selectedVolunteer.volunteerName : "Messages"}
-              </Text>
-              {!selectedVolunteer && currentMission && (
-                <Text style={styles.headerSubtitle}>{currentMission.title}</Text>
-              )}
-            </View>
-
-            <View style={{ width: 40 }} />
-          </View>
-
-          {!selectedVolunteer ? (
-            <View style={styles.volunteersContent}>
-              <ScrollView style={styles.volunteersList}>
-                {currentVolunteers.length === 0 ? (
-                  <View style={styles.emptyMessagingContainer}>
-                    <Ionicons name="mail-outline" size={48} color="#d1d5db" />
-                    <Text style={styles.emptyMessagingText}>Aucun message</Text>
-                  </View>
-                ) : (
-                  currentVolunteers.map((volunteer) => (
-                    <TouchableOpacity
-                      key={volunteer.id}
-                      style={styles.volunteerListItem}
-                      onPress={() => handleSelectVolunteer(volunteer)}
-                    >
-                      <View style={styles.volunteerListAvatar}>
-                        <Text style={styles.volunteerListAvatarText}>{volunteer.volunteerAvatar}</Text>
-                      </View>
-                      <View style={styles.volunteerListInfo}>
-                        <Text style={styles.volunteerListName}>{volunteer.volunteerName}</Text>
-                        <Text style={styles.volunteerListPreview} numberOfLines={1}>
-                          {volunteer.messages[volunteer.messages.length - 1].content}
-                        </Text>
-                      </View>
-                      <View style={styles.volunteerListArrow}>
-                        <Ionicons name="chevron-forward" size={20} color="#ccc" />
-                      </View>
-                    </TouchableOpacity>
-                  ))
-                )}
-              </ScrollView>
-            </View>
-          ) : (
-            <KeyboardAvoidingView
-              style={styles.keyboardAvoidingView}
-              behavior={Platform.OS === "ios" ? "padding" : undefined}
-              keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
-            >
-              <View style={styles.conversationContainer}>
-                <ScrollView
-                  ref={scrollViewRef}
-                  style={styles.messagesContent}
-                  contentContainerStyle={styles.messagesContentContainer}
-                  keyboardShouldPersistTaps="handled"
-                  onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
-                >
-                  {selectedVolunteer.messages.map((msg) => (
-                    <View
-                      key={msg.id}
-                      style={[
-                        styles.messageBubble,
-                        msg.sender === "organizer" ? styles.messageOrganizer : styles.messageVolunteer,
-                      ]}
-                    >
-                      <Text style={[styles.messageText, msg.sender === "organizer" && styles.messageOrganizerText]}>
-                        {msg.content}
-                      </Text>
-                      <Text style={[styles.messageTime, msg.sender === "organizer" && styles.messageOrganizerTime]}>
-                        {msg.timestamp}
-                      </Text>
-                    </View>
-                  ))}
-                  <View style={{ height: Platform.OS === "ios" ? 100 : 120 }} />
-                </ScrollView>
-
-                <View
-                  style={[
-                    styles.replyWrapper,
-                    Platform.OS === "android" && keyboardHeight > 0 && {
-                      marginBottom: keyboardHeight + 15,
-                    },
-                  ]}
-                >
-                  <View style={styles.replyContainer}>
-                    <TextInput
-                      style={styles.replyInput}
-                      placeholder="Répondre au bénévole..."
-                      placeholderTextColor="#999"
-                      multiline
-                      value={messageText}
-                      onChangeText={setMessageText}
-                      onSubmitEditing={handleSendMessage}
-                      returnKeyType="send"
-                      blurOnSubmit={false}
-                    />
-                    <TouchableOpacity
-                      style={[styles.replyButton, !messageText.trim() && styles.replyButtonDisabled]}
-                      onPress={handleSendMessage}
-                      disabled={!messageText.trim()}
-                    >
-                      <Ionicons name="send" size={20} color="white" />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
-            </KeyboardAvoidingView>
-          )}
-        </View>
-      </Modal>
+      {/* ⭐ SUPPRIMER LA MODALE DE MESSAGERIE (optionnel - vous pouvez la garder si vous voulez) */}
     </View>
   )
 }

@@ -30,4 +30,8 @@ export class User {
 
   @Column({ type: 'text', nullable: true })
   refreshToken?: string | null;
+
+  // ⭐ NOUVEAU: Token FCM pour les notifications push
+  @Column({ name: 'fcm_token', type: 'text', nullable: true })
+  fcmToken?: string | null;
 }

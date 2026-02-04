@@ -3,6 +3,7 @@ import { Ionicons } from "@expo/vector-icons"
 
 interface MobileHeaderProps {
   title?: string
+  subtitle?: string          // ← AJOUTÉ ICI
   showBack?: boolean
   showProfile?: boolean
   showNotifications?: boolean
@@ -19,6 +20,7 @@ interface MobileHeaderProps {
 
 export default function MobileHeader({
   title,
+  subtitle,                 // ← AJOUTÉ ICI
   showBack = false,
   showProfile = false,
   showNotifications = false,
@@ -59,18 +61,24 @@ export default function MobileHeader({
           <View style={{ width: 40 }} />
         )}
 
-        {/* Centre : titre ou greeting */}
-        {title ? (
-          <Text style={styles.title}>{title}</Text>
-        ) : (
-          showProfile && (
-            <View style={styles.greetingContainer}>
-              <Text style={styles.greeting}>
-                Bonjour{getFirstName() ? `, ${getFirstName()}` : ""} 👋
-              </Text>
-            </View>
-          )
-        )}
+        {/* Centre : titre ou greeting + subtitle */}
+        <View style={styles.centerContainer}>
+          {title ? (
+            <Text style={styles.title}>{title}</Text>
+          ) : (
+            showProfile && (
+              <View style={styles.greetingContainer}>
+                <Text style={styles.greeting}>
+                  Bonjour{getFirstName() ? `, ${getFirstName()}` : ""} 👋
+                </Text>
+              </View>
+            )
+          )}
+
+          {subtitle && title && (                  // ← AJOUTÉ : affichage du sous-titre
+            <Text style={styles.subtitle}>{subtitle}</Text>
+          )}
+        </View>
 
         {/* Droite : notifications */}
         {showNotifications ? (
@@ -134,13 +142,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
+
+  // AJOUTS ICI
+  centerContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   title: {
     fontSize: 18,
     fontWeight: "600",
     color: "#111827",
-    flex: 1,
-    textAlign: "center",
-    marginLeft: -40,
+    // on enlève le marginLeft: -40 pour centrer correctement avec le subtitle
+  },
+  subtitle: {
+    fontSize: 13,
+    color: "#6B7280",
+    marginTop: 2,
   },
   greetingContainer: {
     flex: 1,

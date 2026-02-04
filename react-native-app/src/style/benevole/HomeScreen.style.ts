@@ -90,4 +90,47 @@ export const styles = StyleSheet.create({
     fontSize: fontSize.base,
     color: colors.text.secondary,
   },
+
+  // Bouton "Missions proches de moi"
+nearbyButton: {
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "center",
+  backgroundColor: colors.primary, // Utilisez votre couleur primaire (#7B68EE)
+  borderRadius: 12,
+  paddingVertical: 14,
+  paddingHorizontal: 16,
+  gap: 8,
+  shadowColor: colors.primary,
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.3,
+  shadowRadius: 8,
+  elevation: 5,
+},
+
+nearbyButtonText: {
+  fontSize: 16,
+  fontWeight: "600",
+  color: "#FFFFFF",
+},
+
+// Bouton "Voir toutes les missions"
+allMissionsButton: {
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "center",
+  backgroundColor: "#FFFFFF",
+  borderRadius: 12,
+  borderWidth: 2,
+  borderColor: colors.primary,
+  paddingVertical: 14,
+  paddingHorizontal: 16,
+  gap: 8,
+},
+
+allMissionsButtonText: {
+  fontSize: 16,
+  fontWeight: "600",
+  color: colors.primary,
+},
 })

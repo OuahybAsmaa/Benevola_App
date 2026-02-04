@@ -1,7 +1,7 @@
 // src/missions/missions.service.ts
-import { Injectable, NotFoundException, ForbiddenException, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Inject, forwardRef, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThan } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Mission } from './mission.entity';
 import { MissionParticipantsService } from '../mission-participants/mission-participants.service';
 
@@ -16,7 +16,6 @@ export class MissionsService {
 
   // ─────────────────────────────────────────────────────────
   // Vérifie si une mission doit être marquée comme 'finished'
-  // (la date de la mission est dépassée et le statut est encore 'active')
   // ─────────────────────────────────────────────────────────
   private async checkAndUpdateMissionStatus(mission: Mission): Promise<Mission> {
     const today = new Date();
@@ -124,7 +123,6 @@ export class MissionsService {
       order: { createdAt: 'DESC' },
     });
 
-    // ⭐ AJOUTER LE COMPTE DES PARTICIPANTS
     return this.addParticipantCounts(missions);
   }
 
@@ -140,8 +138,6 @@ export class MissionsService {
     }
 
     const updatedMission = await this.checkAndUpdateMissionStatus(mission);
-    
-    // ⭐ AJOUTER LE COMPTE DES PARTICIPANTS
     return this.addParticipantCount(updatedMission);
   }
 
@@ -158,7 +154,6 @@ export class MissionsService {
       order: { createdAt: 'DESC' },
     });
 
-    // ⭐ AJOUTER LE COMPTE DES PARTICIPANTS
     return this.addParticipantCounts(missions);
   }
 
@@ -172,29 +167,66 @@ export class MissionsService {
       order: { updatedAt: 'DESC' },
     });
 
-    // ⭐ AJOUTER LE COMPTE DES PARTICIPANTS
     return this.addParticipantCounts(missions);
   }
 
   // ─────────────────────────────────────────────────────────
-  async findNearby(latitude: number, longitude: number, radiusInMeters: number): Promise<any[]> {
-    const missions = await this.missionRepository
-      .createQueryBuilder('mission')
-      .leftJoinAndSelect('mission.organizer', 'organizer')
-      .where(
-        `ST_DWithin(
-          position::geography,
-          ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)::geography,
-          :radius
-        )`,
-        { latitude, longitude, radius: radiusInMeters }
-      )
-      .orderBy('mission.createdAt', 'DESC')
-      .getMany();
+  // 🔥 NOUVELLE VERSION avec calcul de distance et tri
+  // ─────────────────────────────────────────────────────────
+async findNearby(latitude: number, longitude: number, radiusInMeters: number): Promise<any[]> {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-    // ⭐ AJOUTER LE COMPTE DES PARTICIPANTS
-    return this.addParticipantCounts(missions);
-  }
+  console.log('🔍 Recherche missions proches avec:', {
+    latitude,
+    longitude,
+    radius: radiusInMeters + ' mètres',
+    today
+  });
+
+  // 🔥 SOLUTION: Utiliser des paramètres positionnels explicites
+  const missions = await this.missionRepository
+    .createQueryBuilder('mission')
+    .leftJoinAndSelect('mission.organizer', 'organizer')
+    .addSelect(
+      `ST_Distance(
+        mission.position::geography,
+        ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography
+      )`,
+      'distance'
+    )
+    .where('mission.status = :status', { status: 'active' })
+    .andWhere('mission.date >= :today', { today })
+    .andWhere(
+      `ST_DWithin(
+        mission.position::geography,
+        ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography,
+        :radius
+      )`
+    )
+    .setParameters({ 
+      lng: longitude,    // ✅ longitude en premier
+      lat: latitude,     // ✅ latitude en second
+      radius: radiusInMeters 
+    })
+    .orderBy('distance', 'ASC')
+    .getRawAndEntities();
+
+  console.log('📊 Résultats trouvés:', missions.entities.length);
+
+  // Combiner les entités avec les distances calculées
+  const missionsWithDistance = missions.entities.map((mission, index) => {
+    const distanceValue = missions.raw[index].distance;
+    console.log(`✅ Mission: ${mission.title} - Distance: ${distanceValue}m`);
+    return {
+      ...mission,
+      distance: distanceValue,
+    };
+  });
+
+  // Ajouter le compte des participants
+  return this.addParticipantCounts(missionsWithDistance);
+}
 
   // ─────────────────────────────────────────────────────────
   async update(id: string, organizerId: string, data: any): Promise<any> {
@@ -226,24 +258,30 @@ export class MissionsService {
     Object.assign(mission, updateData);
     const savedMission = await this.missionRepository.save(mission);
     
-    // ⭐ AJOUTER LE COMPTE DES PARTICIPANTS
     return this.addParticipantCount(savedMission);
   }
 
   // ─────────────────────────────────────────────────────────
   async delete(id: string, organizerId: string): Promise<void> {
-    const mission = await this.missionRepository.findOne({
-      where: { id },
-    });
+    const mission = await this.missionRepository.findOne({ where: { id } });
 
     if (!mission) {
-      throw new NotFoundException('Mission not found');
+      throw new NotFoundException('Mission introuvable');
     }
 
     if (mission.organizerId !== organizerId) {
-      throw new ForbiddenException('You can only delete your own missions');
+      throw new ForbiddenException('Vous ne pouvez supprimer que vos propres missions');
+    }
+
+    const participantCount = await this.participantsService.countParticipants(id);
+
+    if (participantCount > 0) {
+      throw new BadRequestException(
+        'Impossible de supprimer cette mission : des bénévoles sont déjà inscrits.'
+      );
     }
 
     await this.missionRepository.remove(mission);
+    console.log(`Mission ${id} supprimée par ${organizerId}`);
   }
 }

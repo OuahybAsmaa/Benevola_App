@@ -16,15 +16,26 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.benevolapp.app"
+      "bundleIdentifier": "com.benevolapp.app",
+      "infoPlist": {
+        "UIBackgroundModes": ["remote-notification"],
+        "NSUserNotificationAlertStyle": "banner"
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.jpg",
         "backgroundColor": "#7B68EE"
       },
-      "googleServicesFiles": "./google-services.json",
-      "package": "com.benevolapp.app"
+      "googleServicesFile": "./google-services.json",
+      "package": "com.benevolapp.app",
+      "permissions": [
+        "RECEIVE_BOOT_COMPLETED",
+        "SCHEDULE_EXACT_ALARM",
+        "VIBRATE",
+        "POST_NOTIFICATIONS"
+      ],
+      "useNextNotificationsApi": true
     },
     "web": {
       "favicon": "./assets/icon.jpg"
@@ -41,6 +52,21 @@
         {
           "photosPermission": "L'application a besoin d'accéder à vos photos pour vous permettre d'uploader une image.",
           "cameraPermission": "L'application a besoin d'accéder à votre caméra pour prendre des photos."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.jpg",
+          "color": "#7B68EE",
+          "sounds": [],
+          "mode": "production"
+        }
+      ],
+      [
+       "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Permettre à l'application d'accéder à votre position pour afficher les missions proches."
         }
       ]
     ],
