@@ -6,7 +6,7 @@ import MobileHeader from "../../components/MobileHeader"
 import { useAuth } from "../../hooks/useAuth"
 import { useMission } from "../../hooks/useMissions"
 import { styles } from '../../style/organizer/ProfilOrganisateur.style'
-import { getImageUrl } from "../../config/api.config" // 👈 IMPORT AJOUTÉ
+import { getImageUrl } from "../../config/api.config" 
 
 interface ProfileScreenProps {
   onNavigate: (screen: string) => void
@@ -57,7 +57,6 @@ export default function ProfilOrganisateur({ onNavigate }: ProfileScreenProps) {
 
   if (!user) return null
 
-  // 👇 Utilisez getImageUrl pour l'avatar
   const avatarUrl = getImageUrl(user.avatar)
 
   return (
@@ -69,22 +68,20 @@ export default function ProfilOrganisateur({ onNavigate }: ProfileScreenProps) {
         <View style={styles.profileHeader}>
           <View style={styles.profileInfo}>
             <View style={styles.avatarContainer}>
-              {avatarUrl ? (
-                <Image 
-                  source={{ uri: avatarUrl }} 
-                  style={styles.avatar}
-                  onError={() => console.log('❌ Erreur chargement avatar organisateur')}
-                  onLoad={() => console.log('✅ Avatar organisateur chargé')}
-                />
-              ) : (
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>
-                    {user.firstName?.[0] || ''}
-                    {user.lastName?.[0] || ''}
-                  </Text>
-                </View>
-              )}
-            </View>
+  {avatarUrl ? (
+    <Image 
+      source={{ uri: avatarUrl }} 
+      style={styles.avatar}
+    />
+  ) : (
+    <View style={styles.avatar}>
+      <Text style={styles.avatarText}>
+        {user.firstName?.[0] || ''}
+        {user.lastName?.[0] || ''}
+      </Text>
+    </View>
+  )}
+</View>
             <View style={styles.profileDetails}>
               <Text style={styles.profileName}>
                 {user.firstName} {user.lastName}

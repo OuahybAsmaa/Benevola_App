@@ -1,6 +1,6 @@
 // src/api/profile.ts
 import axios from 'axios';
-import API_BASE_URL from '../config/baseUrl'; // 👈 Import de l'URL de base
+import API_BASE_URL from '../config/baseUrl'; 
 
 export interface UpdateProfileData {
   firstName?: string;
@@ -11,7 +11,7 @@ export interface UpdateProfileData {
 export const profileAPI = {
   updateProfile: async (data: UpdateProfileData, token: string) => {
     const response = await axios.put(
-      `${API_BASE_URL}/profile`, // 👈 Utilise API_BASE_URL
+      `${API_BASE_URL}/profile`, 
       data,
       {
         headers: {
@@ -36,7 +36,7 @@ export const profileAPI = {
     } as any);
 
     const response = await axios.post(
-      `${API_BASE_URL}/profile/avatar`, // 👈 Utilise API_BASE_URL
+      `${API_BASE_URL}/profile/avatar`, 
       formData,
       {
         headers: {
@@ -50,7 +50,7 @@ export const profileAPI = {
 
   getProfile: async (token: string) => {
     const response = await axios.get(
-      `${API_BASE_URL}/profile`, // 👈 Utilise API_BASE_URL
+      `${API_BASE_URL}/profile`, 
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -61,5 +61,4 @@ export const profileAPI = {
   },
 };
 
-// Optionnel : export par défaut pour compatibilité
 export default profileAPI;

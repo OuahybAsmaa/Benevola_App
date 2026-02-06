@@ -30,7 +30,6 @@ const iconMap = {
   friend: "person-add-outline" as const,
 }
 
-// Fonction pour formater le temps
 const formatTime = (dateString: string): string => {
   const date = new Date(dateString)
   const now = new Date()
@@ -80,56 +79,32 @@ export default function NotificationsScreen({ onNavigate }: NotificationsScreenP
   }
 
   const handleNotificationPress = async (notification: any) => {
-  // Marquer comme lu
   if (!notification.isRead) {
     await markAsRead(notification.id)
   }
 
-  console.log('📱 Notification cliquée:', {
-    type: notification.type,
-    data: notification.data,
-    userRole: user?.role,
-    userId: user?.id
-  })
-
-  // Navigation selon le type
   if (notification.type === 'message' && notification.data?.missionId) {
     
     if (user?.role === "organisation") {
-      // Pour l'organisateur
       const missionTitle = notification.data.missionTitle || "Mission"
-      
-      console.log('👨‍💼 Navigation organisateur vers organizer-messaging avec:', {
-        missionId: notification.data.missionId,
-        missionTitle
-      })
       
       onNavigate("organizer-messaging", {
         missionId: notification.data.missionId,
         missionTitle,
       })
     } else {
-      // Pour le bénévole
-      console.log('🔍 Analyse des données de notification pour bénévole:');
-      console.log('- User ID (bénévole):', user?.id);
-      console.log('- Sender ID (expéditeur):', notification.data.senderId);
-      
       let organizerId = notification.data.senderId;
       let organizerName = notification.data.senderName || "Organisateur";
       
-      // Si senderId est le même que l'utilisateur courant, chercher l'organisateur dans la mission
       if (organizerId === user?.id) {
-        console.log('⚠️ senderId = user.id, récupération de la mission...');
         
         try {
           const missionResponse = await api.get(`/missions/${notification.data.missionId}`);
           const mission = missionResponse.data;
           
           if (mission) {
-            // Récupérer l'ID de l'organisateur
             organizerId = mission.organizerId || mission.organizer?.id;
             
-            // Récupérer le nom de l'organisateur
             if (mission.organizerName) {
               organizerName = mission.organizerName;
             } else if (mission.organizer?.name) {
@@ -140,11 +115,8 @@ export default function NotificationsScreen({ onNavigate }: NotificationsScreenP
                 organizerName += ` ${mission.organizer.lastName}`;
               }
             }
-            
-            console.log('✅ Organisateur récupéré depuis la mission:', organizerName);
           }
         } catch (err) {
-          console.error('❌ Erreur récupération mission:', err);
         }
       }
       
@@ -152,16 +124,8 @@ export default function NotificationsScreen({ onNavigate }: NotificationsScreenP
       const missionTitle = notification.data.missionTitle || "Mission";
       
       if (!organizerId) {
-        console.error('❌ Impossible de déterminer l\'organisateur');
         return;
       }
-      
-      console.log('👤 Navigation bénévole vers messaging avec:', {
-        organizerId,
-        organizerName,
-        missionId,
-        missionTitle
-      })
       
       onNavigate("messaging", {
         organizerId,
@@ -171,30 +135,17 @@ export default function NotificationsScreen({ onNavigate }: NotificationsScreenP
       })
     }
   } else if (notification.type === 'mission' && notification.data?.missionId) {
-    console.log('🎯 Navigation vers mission-detail:', notification.data.missionId)
     onNavigate("mission-detail", { missionId: notification.data.missionId })
-  } else {
-    console.log('⚠️ Type de notification non géré:', notification.type)
   }
 }
-
-
-
-
-
-
-
-
 
   const handleMarkAllAsRead = async () => {
     try {
       await markAllAsRead()
     } catch (error) {
-      console.error('Erreur marquage tout comme lu:', error)
     }
   }
 
-  // Séparer les notifications nouvelles et anciennes
   const newNotifications = notifications.filter(n => !n.isRead)
   const oldNotifications = notifications.filter(n => n.isRead)
 
@@ -237,7 +188,6 @@ export default function NotificationsScreen({ onNavigate }: NotificationsScreenP
           }}
           scrollEventThrottle={400}
         >
-          {/* New Notifications */}
           {newNotifications.length > 0 && (
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
@@ -288,7 +238,6 @@ export default function NotificationsScreen({ onNavigate }: NotificationsScreenP
             </View>
           )}
 
-          {/* Earlier Notifications */}
           {oldNotifications.length > 0 && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Précédentes</Text>
@@ -323,7 +272,6 @@ export default function NotificationsScreen({ onNavigate }: NotificationsScreenP
             </View>
           )}
 
-          {/* Empty State */}
           {notifications.length === 0 && (
             <View style={styles.emptyContainer}>
               <Ionicons name="notifications-off-outline" size={64} color="#d1d5db" />
@@ -334,7 +282,6 @@ export default function NotificationsScreen({ onNavigate }: NotificationsScreenP
             </View>
           )}
 
-          {/* Loader pour pagination */}
           {loading && notifications.length > 0 && (
             <View style={{ padding: 20, alignItems: 'center' }}>
               <ActivityIndicator size="small" color="#7B68EE" />

@@ -1,5 +1,5 @@
 // screens/LoginScreen.refactored.tsx
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import { View, Text, ScrollView, Alert } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useAuth } from "../hooks/useAuth"
@@ -23,6 +23,19 @@ export default function LoginScreen({ onNavigate }: LoginScreenProps) {
   const [loginAttempts, setLoginAttempts] = useState(0)
   const [isBlocked, setIsBlocked] = useState(false)
   const MAX_ATTEMPTS = 5
+
+  // ✅ AJOUT - Ref pour stocker le timeout
+  const blockTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  // ✅ AJOUT - Cleanup du timeout au démontage
+  useEffect(() => {
+    return () => {
+      if (blockTimeoutRef.current) {
+        clearTimeout(blockTimeoutRef.current)
+        blockTimeoutRef.current = null
+      }
+    }
+  }, [])
 
   const validateForm = (values: LoginFormData) => {
     const errors: Partial<Record<keyof LoginFormData, string>> = {}
@@ -59,8 +72,8 @@ export default function LoginScreen({ onNavigate }: LoginScreenProps) {
         [{ text: "OK" }]
       )
       
-      // Débloquer après 15 minutes
-      setTimeout(() => {
+      // ✅ MODIFICATION - Stocker la référence du timeout
+      blockTimeoutRef.current = setTimeout(() => {
         setIsBlocked(false)
         setLoginAttempts(0)
       }, 15 * 60 * 1000) // 15 minutes
@@ -74,23 +87,17 @@ export default function LoginScreen({ onNavigate }: LoginScreenProps) {
         password: values.password,
       })
       
-      // Réinitialiser les tentatives en cas de succès
       setLoginAttempts(0)
       setIsBlocked(false)
       
-      // La navigation se fait automatiquement via le listener auth global
     } catch (error: any) {
-      //console.error("Erreur de connexion:", error)
-      
-      // Incrémenter le nombre de tentatives échouées
+
       const newAttempts = loginAttempts + 1
       setLoginAttempts(newAttempts)
       
-      // Préparer le message d'erreur
       let errorMessage = "Une erreur est survenue. Veuillez réessayer."
       let errorTitle = "Erreur de connexion"
-      
-      // Détection du type d'erreur
+
       if (error?.message?.includes("Invalid credentials") || 
           error?.message?.includes("credentials") ||
           error?.message?.includes("incorrect") ||
@@ -121,7 +128,6 @@ export default function LoginScreen({ onNavigate }: LoginScreenProps) {
         errorTitle = "Compte bloqué"
       }
       
-      // Afficher l'alerte
       Alert.alert(
         errorTitle,
         errorMessage,
@@ -149,13 +155,11 @@ export default function LoginScreen({ onNavigate }: LoginScreenProps) {
 
   return (
     <ScrollView style={commonStyles.container} contentContainerStyle={styles.contentContainer}>
-      {/* Header */}
       <View style={styles.header}>
         <Ionicons name="heart" size={64} color="#fff" />
         <Text style={styles.headerTitle}>Bon retour !</Text>
       </View>
 
-      {/* Form */}
       <View style={styles.form}>
         <Text style={styles.title}>Connexion</Text>
 

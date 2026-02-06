@@ -14,9 +14,6 @@ export class MissionParticipantsService {
     private missionRepository: Repository<Mission>,
   ) {}
 
-  // ─────────────────────────────────────────────────────────
-  // Inscrire un bénévole à une mission
-  // ─────────────────────────────────────────────────────────
   async register(missionId: string, userId: string): Promise<MissionParticipant> {
     // Récupérer la mission
     const mission = await this.missionRepository.findOne({
@@ -77,9 +74,6 @@ export class MissionParticipantsService {
     return participant;
   }
 
-  // ─────────────────────────────────────────────────────────
-  // Annuler l'inscription d'un bénévole
-  // ─────────────────────────────────────────────────────────
   async unregister(missionId: string, userId: string): Promise<void> {
     const participant = await this.participantRepository.findOne({
       where: { 
@@ -119,9 +113,6 @@ export class MissionParticipantsService {
     }
   }
 
-  // ─────────────────────────────────────────────────────────
-  // Récupérer les participants d'une mission
-  // ─────────────────────────────────────────────────────────
   async getParticipants(missionId: string) {
     return this.participantRepository.find({
       where: { 
@@ -133,9 +124,6 @@ export class MissionParticipantsService {
     });
   }
 
-  // ─────────────────────────────────────────────────────────
-  // Récupérer les missions d'un bénévole
-  // ─────────────────────────────────────────────────────────
   async getUserMissions(userId: string) {
     return this.participantRepository.find({
       where: { 
@@ -147,9 +135,7 @@ export class MissionParticipantsService {
     });
   }
 
-  // ─────────────────────────────────────────────────────────
-  // Vérifier si un utilisateur est inscrit à une mission
-  // ─────────────────────────────────────────────────────────
+
   async isUserRegistered(missionId: string, userId: string): Promise<boolean> {
     const count = await this.participantRepository.count({
       where: { 
@@ -162,9 +148,6 @@ export class MissionParticipantsService {
     return count > 0;
   }
 
-  // ─────────────────────────────────────────────────────────
-  // Compter les participants d'une mission
-  // ─────────────────────────────────────────────────────────
   async countParticipants(missionId: string): Promise<number> {
     return this.participantRepository.count({
       where: { 
@@ -174,11 +157,7 @@ export class MissionParticipantsService {
     });
   }
 
-  // ─────────────────────────────────────────────────────────
-  // Obtenir les comptes de participants pour plusieurs missions
-  // Retourne un Map avec missionId => count
-  // ⭐ CETTE MÉTHODE EST NÉCESSAIRE POUR AFFICHER LE NOMBRE DANS LES LISTES
-  // ─────────────────────────────────────────────────────────
+
   async getParticipantCounts(missionIds: string[]): Promise<Map<string, number>> {
     if (missionIds.length === 0) {
       return new Map();

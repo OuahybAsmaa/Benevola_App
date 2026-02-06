@@ -16,7 +16,6 @@ api.interceptors.request.use(async (config) => {
   return config
 })
 
-// Tentative de refresh automatique quand on reçoit 401
 api.interceptors.response.use(
   response => response,
   async error => {
@@ -30,7 +29,7 @@ api.interceptors.response.use(
         if (!refreshToken) throw new Error('No refresh token');
 
         const { data } = await axios.post(
-          `${API_BASE_URL}/auth/refresh`,          // ← important !
+          `${API_BASE_URL}/auth/refresh`,        
           { refresh_token: refreshToken }
         );
 
@@ -39,25 +38,19 @@ api.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${data.access_token}`;
         return api(originalRequest);
       } catch (refreshError) {
-        // Refresh échoué → déconnexion forcée
+        
         console.warn('Refresh token failed, forcing logout');
 
-        // Supprime les clés une par une (await pour éviter les race conditions)
         try {
           await SecureStore.deleteItemAsync('access_token');
         } catch (e) {}
         try {
           await SecureStore.deleteItemAsync('refresh_token');
         } catch (e) {}
-
-        // Optionnel : ici tu peux déclencher une redirection globale vers login
-        // Exemple : utiliser un EventEmitter ou un contexte global pour notifier l'app
-        // (pas implémenté ici pour garder simple)
       }
     }
 
     return Promise.reject(error);
   }
 );
-
 export default api

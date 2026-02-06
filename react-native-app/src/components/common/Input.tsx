@@ -1,5 +1,5 @@
 // components/common/Input.tsx
-import { useState } from "react"
+import { useState, memo, useCallback } from "react"
 import { View, TextInput, Text, TouchableOpacity, StyleSheet, type TextInputProps } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { colors, borderRadius, spacing, fontSize } from "../../style/theme"
@@ -13,7 +13,7 @@ interface InputProps extends TextInputProps {
   containerStyle?: any
 }
 
-export default function Input({
+const Input = memo(({
   label,
   error,
   icon,
@@ -22,9 +22,27 @@ export default function Input({
   containerStyle,
   secureTextEntry,
   ...props
-}: InputProps) {
+}: InputProps) => {
   const [isFocused, setIsFocused] = useState(false)
   const [isPasswordVisible, setIsPasswordVisible] = useState(false)
+
+  const handleFocus = useCallback(() => {
+    setIsFocused(true)
+  }, [])
+
+  const handleBlur = useCallback(() => {
+    setIsFocused(false)
+  }, [])
+
+  const togglePasswordVisibility = useCallback(() => {
+    setIsPasswordVisible(prev => !prev)
+  }, [])
+
+  const handleRightIconPress = useCallback(() => {
+    if (onRightIconPress) {
+      onRightIconPress()
+    }
+  }, [onRightIconPress])
 
   const showPasswordToggle = secureTextEntry !== undefined
 
@@ -50,8 +68,8 @@ export default function Input({
         
         <TextInput
           style={[styles.input, icon && styles.inputWithIcon]}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
           placeholderTextColor={colors.text.disabled}
           secureTextEntry={secureTextEntry && !isPasswordVisible}
           {...props}
@@ -59,7 +77,7 @@ export default function Input({
         
         {showPasswordToggle && (
           <TouchableOpacity
-            onPress={() => setIsPasswordVisible(!isPasswordVisible)}
+            onPress={togglePasswordVisibility}
             style={styles.rightIcon}
           >
             <Ionicons
@@ -72,7 +90,7 @@ export default function Input({
         
         {rightIcon && !showPasswordToggle && (
           <TouchableOpacity
-            onPress={onRightIconPress}
+            onPress={handleRightIconPress}
             style={styles.rightIcon}
           >
             <Ionicons
@@ -87,7 +105,9 @@ export default function Input({
       {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
   )
-}
+})
+
+export default Input
 
 const styles = StyleSheet.create({
   container: {

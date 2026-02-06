@@ -11,11 +11,9 @@ export class MessagesService {
   constructor(
     @InjectRepository(Message)
     private messagesRepository: Repository<Message>,
-    // ⭐ AJOUT: Injecter le service de notifications
     private notificationsService: NotificationsService,
   ) {}
 
-  // Créer un nouveau message (MODIFIÉ)
   async create(
     senderId: string,
     createMessageDto: CreateMessageDto,
@@ -29,9 +27,7 @@ export class MessagesService {
 
     const savedMessage = await this.messagesRepository.save(message);
 
-    // ⭐ NOUVEAU: Créer une notification pour le destinataire
     try {
-      // Récupérer les infos de l'expéditeur
       const sender = await this.messagesRepository
         .createQueryBuilder('message')
         .leftJoinAndSelect('message.sender', 'sender')
@@ -40,7 +36,6 @@ export class MessagesService {
 
       let missionTitle: string | undefined;
       if (createMessageDto.missionId) {
-        // Récupérer le titre de la mission si disponible
         const messageWithMission = await this.messagesRepository
           .createQueryBuilder('message')
           .leftJoinAndSelect('message.mission', 'mission')
@@ -54,23 +49,20 @@ export class MessagesService {
         ? `${sender.sender.firstName} ${sender.sender.lastName}` 
         : 'Un utilisateur';
 
-      // ⭐ CORRECTION IMPORTANTE: Passer senderId au lieu de receiverId
       await this.notificationsService.createMessageNotification(
-        createMessageDto.receiverId, // receiverId (destinataire de la notification)
+        createMessageDto.receiverId, 
         senderName,
         missionTitle,
         createMessageDto.missionId,
-        senderId, // ⭐ AJOUT: ID de l'expéditeur du message
+        senderId, 
       );
     } catch (error) {
       console.error('❌ Erreur création notification:', error);
-      // Ne pas bloquer l'envoi du message si la notification échoue
     }
 
     return savedMessage;
   }
 
-  // Récupérer les messages d'une conversation
   async getConversation(
     userId: string,
     otherUserId: string,
@@ -111,7 +103,6 @@ export class MessagesService {
     };
   }
 
-  // Récupérer toutes les conversations d'un utilisateur
   async getUserConversations(userId: string): Promise<any[]> {
     const messages = await this.messagesRepository
       .createQueryBuilder('message')
@@ -156,7 +147,6 @@ export class MessagesService {
     return Array.from(conversationsMap.values());
   }
 
-  // Marquer les messages comme lus
   async markAsRead(
     userId: string,
     senderId: string,
@@ -178,7 +168,6 @@ export class MessagesService {
     await query.execute();
   }
 
-  // Compter les messages non lus
   async getUnreadCount(userId: string): Promise<number> {
     return await this.messagesRepository.count({
       where: {

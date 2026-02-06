@@ -1,9 +1,10 @@
+import { memo, useCallback, useMemo } from "react"
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 
 interface MobileHeaderProps {
   title?: string
-  subtitle?: string          // ← AJOUTÉ ICI
+  subtitle?: string          
   showBack?: boolean
   showProfile?: boolean
   showNotifications?: boolean
@@ -18,9 +19,9 @@ interface MobileHeaderProps {
   } | null
 }
 
-export default function MobileHeader({
+const MobileHeader = memo(({
   title,
-  subtitle,                 // ← AJOUTÉ ICI
+  subtitle,                 
   showBack = false,
   showProfile = false,
   showNotifications = false,
@@ -29,39 +30,60 @@ export default function MobileHeader({
   onProfile,
   onNotifications,
   user,
-}: MobileHeaderProps) {
-  // Initiales par défaut si pas d'utilisateur
-  const getInitials = () => {
-    if (user?.firstName && user?.lastName) {
-      return `${user.firstName[0].toUpperCase()}${user.lastName[0].toUpperCase()}`
+}: MobileHeaderProps) => {
+  const handleBack = useCallback(() => {
+    if (onBack) {
+      onBack();
     }
-    return "JD" // Par défaut (ou "OR" pour organisateur si tu veux)
-  }
+  }, [onBack]);
 
-  // Prénom pour le greeting
-  const getFirstName = () => {
-    return user?.firstName || ""
-  }
+  const handleProfile = useCallback(() => {
+    if (onProfile) {
+      onProfile();
+    }
+  }, [onProfile]);
+
+  const handleNotifications = useCallback(() => {
+    if (onNotifications) {
+      onNotifications();
+    }
+  }, [onNotifications]);
+
+  const getInitials = useCallback(() => {
+    if (user?.firstName && user?.lastName) {
+      return `${user.firstName[0].toUpperCase()}${user.lastName[0].toUpperCase()}`;
+    }
+    return "JD";
+  }, [user?.firstName, user?.lastName]);
+
+  const getFirstName = useCallback(() => {
+    return user?.firstName || "";
+  }, [user?.firstName]);
+
+  const initials = useMemo(() => getInitials(), [getInitials]);
+  const firstName = useMemo(() => getFirstName(), [getFirstName]);
+
+  const badgeDisplay = useMemo(() => {
+    return notificationCount > 99 ? "99+" : notificationCount;
+  }, [notificationCount]);
 
   return (
     <View style={styles.header}>
       <View style={styles.headerContent}>
-        {/* Gauche : retour ou avatar profil */}
         {showBack ? (
-          <TouchableOpacity onPress={onBack} style={styles.iconButton}>
+          <TouchableOpacity onPress={handleBack} style={styles.iconButton}>
             <Ionicons name="chevron-back" size={24} color="#374151" />
           </TouchableOpacity>
         ) : showProfile ? (
-          <TouchableOpacity onPress={onProfile} style={styles.avatar}>
+          <TouchableOpacity onPress={handleProfile} style={styles.avatar}>
             <View style={styles.avatarCircle}>
-              <Text style={styles.avatarText}>{getInitials()}</Text>
+              <Text style={styles.avatarText}>{initials}</Text>
             </View>
           </TouchableOpacity>
         ) : (
           <View style={{ width: 40 }} />
         )}
 
-        {/* Centre : titre ou greeting + subtitle */}
         <View style={styles.centerContainer}>
           {title ? (
             <Text style={styles.title}>{title}</Text>
@@ -69,25 +91,23 @@ export default function MobileHeader({
             showProfile && (
               <View style={styles.greetingContainer}>
                 <Text style={styles.greeting}>
-                  Bonjour{getFirstName() ? `, ${getFirstName()}` : ""} 👋
+                  Bonjour{firstName ? `, ${firstName}` : ""} 👋
                 </Text>
               </View>
             )
           )}
 
-          {subtitle && title && (                  // ← AJOUTÉ : affichage du sous-titre
+          {subtitle && title && (                  
             <Text style={styles.subtitle}>{subtitle}</Text>
           )}
         </View>
-
-        {/* Droite : notifications */}
         {showNotifications ? (
-          <TouchableOpacity onPress={onNotifications} style={styles.iconButton}>
+          <TouchableOpacity onPress={handleNotifications} style={styles.iconButton}>
             <Ionicons name="notifications-outline" size={24} color="#374151" />
             {notificationCount > 0 && (
               <View style={styles.badge}>
                 <Text style={styles.badgeText}>
-                  {notificationCount > 99 ? "99+" : notificationCount}
+                  {badgeDisplay}
                 </Text>
               </View>
             )}
@@ -97,8 +117,10 @@ export default function MobileHeader({
         )}
       </View>
     </View>
-  )
-}
+  );
+});
+
+export default MobileHeader;
 
 const styles = StyleSheet.create({
   header: {
@@ -143,7 +165,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 
-  // AJOUTS ICI
   centerContainer: {
     flex: 1,
     alignItems: "center",
@@ -153,7 +174,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     color: "#111827",
-    // on enlève le marginLeft: -40 pour centrer correctement avec le subtitle
   },
   subtitle: {
     fontSize: 13,

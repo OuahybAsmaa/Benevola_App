@@ -14,7 +14,6 @@ import { initializeFirebaseOnStartup } from './firebase-admin.config';
 })
 export class CustomConfigModule {
   constructor() {
-    // Initialiser Firebase après le chargement des variables d'environnement
     initializeFirebaseOnStartup();
   }
 }

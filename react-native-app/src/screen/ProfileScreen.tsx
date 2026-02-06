@@ -67,7 +67,6 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
       <MobileHeader title="Mon Profil" showBack onBack={() => onNavigate("home")} />
 
       <ScrollView style={styles.scrollView}>
-        {/* Profile Header */}
         <View style={styles.profileHeader}>
           <View style={styles.profileInfo}>
             <View style={styles.avatarContainer}>
@@ -75,8 +74,7 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
                 <Image
                   source={{ uri: avatarUrl }}
                   style={styles.avatarImage}
-                  onError={() => console.log('❌ Erreur chargement avatar')}
-                  onLoad={() => console.log('✅ Avatar chargé')}
+                 
                 />
               ) : (
                 <View style={styles.avatar}>
@@ -131,7 +129,6 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
           </View>
         )}
 
-        {/* Mes Missions — actives/complètes, cliquables vers le détail */}
         {!loading && activeTab === "missions" && (
           <View style={styles.section}>
             {activeMissions.length === 0 ? (
@@ -163,7 +160,6 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
           </View>
         )}
 
-        {/* Historique — missions terminées, aussi cliquables */}
         {!loading && activeTab === "history" && (
           <View style={styles.section}>
             {finishedMissions.length === 0 ? (
@@ -194,7 +190,6 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
           </View>
         )}
 
-        {/* Menu */}
         <View style={styles.section}>
           <View style={styles.menuCard}>
             {menuItems.map((item, index) => (

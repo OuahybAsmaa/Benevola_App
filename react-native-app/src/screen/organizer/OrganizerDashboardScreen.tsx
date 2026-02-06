@@ -20,7 +20,6 @@ import { useState, useRef, useEffect } from "react"
 import { styles } from '../../style/organizer/OrganizerDashboardScreen.style'
 import { useMission } from '../../hooks/useMissions'
 import { getImageUrl } from '../../config/api.config'
-// ⭐ AJOUT: Import du hook useNotifications
 import { useNotifications } from "../../hooks/useNotifications"
 
 interface OrganizerDashboardScreenProps {
@@ -39,7 +38,6 @@ interface VolunteerMessage {
   }>
 }
 
-// Définition du type Mission pour le dashboard
 interface MissionWithParticipants {
   id: string
   title: string
@@ -49,8 +47,8 @@ interface MissionWithParticipants {
   maxParticipants: number
   date: string
   location?: string
-  participants?: number  // Nombre actuel de participants
-  currentParticipants?: number  // Alternative pour compatibilité
+  participants?: number
+  currentParticipants?: number
 }
 
 function formatDate(dateStr: string): string {
@@ -58,7 +56,6 @@ function formatDate(dateStr: string): string {
   return date.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })
 }
 
-// Retourne couleur + label selon le statut
 function getStatusStyle(status: string): { color: string; label: string } {
   switch (status) {
     case 'active':
@@ -75,7 +72,6 @@ function getStatusStyle(status: string): { color: string; label: string } {
 export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashboardScreenProps) {
   const { user } = useAuth()
   const { myMissions, getMyMissions, deleteMission, loading } = useMission()
-  // ⭐ AJOUT: Récupérer les vraies notifications
   const { unreadCount: notificationUnreadCount, notifications } = useNotifications()
 
   const [showMessagingModal, setShowMessagingModal] = useState(false)
@@ -85,22 +81,18 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
   const [keyboardHeight, setKeyboardHeight] = useState(0)
   const scrollViewRef = useRef<ScrollView>(null)
 
-  // ⭐ AJOUT: Messages mockés pour tester
   const [mockMessages, setMockMessages] = useState<{ [key: string]: VolunteerMessage[] }>({})
   
-  // ⭐ AJOUT: Calculer les messages non lus (mocké pour l'instant)
   const [totalUnreadMessages, setTotalUnreadMessages] = useState(0)
 
   useEffect(() => {
     getMyMissions()
   }, [])
 
-  // ⭐ AJOUT: Initialiser les messages mockés quand les missions sont chargées
   useEffect(() => {
     if (myMissions.length > 0 && Object.keys(mockMessages).length === 0) {
       const newMockData: { [key: string]: VolunteerMessage[] } = {}
       
-      // Générer des messages mockés pour chaque mission existante
       myMissions.forEach((mission: any) => {
         const volunteers: VolunteerMessage[] = [
           {
@@ -187,18 +179,15 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
     }
   }, [myMissions])
 
-  // ⭐ AJOUT: Filtrer les vraies notifications de type 'message'
   const messageNotifications = notifications.filter(
     n => n.type === 'message' && !n.isRead
   )
 
-  // ⭐ AJOUT: Mettre à jour les messages non lus mockés (gardé pour compatibilité)
   useEffect(() => {
     let totalUnread = 0
     
     myMissions.forEach((mission: any) => {
       if (mockMessages[mission.id]) {
-        // Simuler quelques messages non lus (1-3 par mission)
         const randomUnread = Math.floor(Math.random() * 3) + 1
         totalUnread += randomUnread
       }
@@ -207,33 +196,30 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
     setTotalUnreadMessages(totalUnread)
   }, [myMissions, mockMessages])
 
-  useEffect(() => {
-    if (Platform.OS === "android") {
-      const keyboardDidShowListener = Keyboard.addListener(
-        "keyboardDidShow",
-        (e) => { setKeyboardHeight(e.endCoordinates.height) }
-      )
-      const keyboardDidHideListener = Keyboard.addListener(
-        "keyboardDidHide",
-        () => { setKeyboardHeight(0) }
-      )
-      return () => {
-        keyboardDidShowListener.remove()
-        keyboardDidHideListener.remove()
-      }
+ 
+useEffect(() => {
+  if (Platform.OS === "android") {
+    const keyboardDidShowListener = Keyboard.addListener(
+      "keyboardDidShow",
+      (e) => { setKeyboardHeight(e.endCoordinates.height) }
+    )
+    const keyboardDidHideListener = Keyboard.addListener(
+      "keyboardDidHide",
+      () => { setKeyboardHeight(0) }
+    )
+    return () => {
+      keyboardDidShowListener.remove()
+      keyboardDidHideListener.remove()
     }
-  }, [])
+  }
+}, [])
 
-  // ⭐ CALCULER LE TOTAL DE BÉNÉVOLES INSCRITS
   const totalVolunteers = myMissions.reduce((total, mission: any) => {
-    // Essayer d'abord participants, puis currentParticipants, sinon 0
     const participants = mission.participants || mission.currentParticipants || 0
     return total + participants
   }, 0)
 
-  // ⭐ MODIFICATION: Naviguer vers l'écran de messagerie dédié
   const handleOpenMessages = (missionId: string, missionTitle: string) => {
-    // Naviguer vers l'écran de messagerie organisateur
     onNavigate("organizer-messaging", { 
       missionId, 
       missionTitle 
@@ -271,7 +257,6 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
       messages: [...selectedVolunteer.messages, newMessage],
     }
 
-    // ⭐ MODIFICATION: Mettre à jour l'état mockMessages
     const updatedMockMessages = {
       ...mockMessages,
       [selectedMissionId]: mockMessages[selectedMissionId].map((v) =>
@@ -307,13 +292,10 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
       [{ text: 'OK', style: 'default' }]
     );
 
-    getMyMissions(); // recharge la liste
+    getMyMissions();
 
   } catch (err: any) {
-    // ─── PARTIE TRÈS IMPORTANTE ───
-    console.log('Détails erreur complète :', JSON.stringify(err, null, 2));
 
-    // Récupère le message de la façon la plus robuste possible
     let errorMessage = 'Une erreur inconnue est survenue';
 
     if (err?.payload?.message) {
@@ -326,7 +308,6 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
       errorMessage = err;
     }
 
-    // Force l'affichage avec un titre clair + le message exact
     Alert.alert(
       'Impossible de supprimer la mission',
       errorMessage,
@@ -342,7 +323,6 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
 };
 
   const currentMission = myMissions.find((m) => m.id === selectedMissionId)
-  // ⭐ MODIFICATION: Utiliser mockMessages
   const currentVolunteers = selectedMissionId ? mockMessages[selectedMissionId] || [] : []
 
   return (
@@ -351,7 +331,6 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
         title=""
         showProfile
         showNotifications
-        // ⭐ MODIFICATION: Utiliser le vrai compteur de notifications non lues
         notificationCount={notificationUnreadCount}
         user={{
           firstName: user?.firstName || "Organisateur",
@@ -364,7 +343,6 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
 
       <ScrollView style={styles.scrollView}>
         <View style={styles.content}>
-          {/* Titre */}
           <View style={styles.dashboardHeader}>
             <View>
               <Text style={styles.greeting}>Tableau de Bord</Text>
@@ -372,7 +350,6 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
             </View>
           </View>
 
-          {/* Statistiques */}
           <View style={styles.statsContainer}>
             <View style={styles.statCard}>
               <View style={styles.statIconContainer}>
@@ -385,7 +362,6 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
               <View style={styles.statIconContainer}>
                 <Ionicons name="people-outline" size={24} color="#10b981" />
               </View>
-              {/* ⭐ AFFICHAGE DU TOTAL DE BÉNÉVOLES */}
               <Text style={styles.statValue}>{totalVolunteers}</Text>
               <Text style={styles.statLabel}>Bénévoles</Text>
             </View>
@@ -393,18 +369,15 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
               <View style={styles.statIconContainer}>
                 <Ionicons name="mail-outline" size={24} color="#f59e0b" />
               </View>
-              {/* ⭐ MODIFICATION: Utiliser les vraies notifications de message non lues */}
               <Text style={styles.statValue}>{messageNotifications.length}</Text>
               <Text style={styles.statLabel}>Messages</Text>
             </View>
           </View>
 
-          {/* Section Missions */}
           <View style={styles.sectionHeader}>
                <Text style={styles.sectionTitle}>Vos Missions</Text>
           </View>
 
-          {/* Loading */}
           {loading && (
             <View style={{ padding: 40, alignItems: "center" }}>
               <ActivityIndicator size="large" color="#7B68EE" />
@@ -412,7 +385,6 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
             </View>
           )}
 
-          {/* Empty state */}
           {!loading && myMissions.length === 0 && (
             <View style={{ padding: 40, alignItems: "center" }}>
               <Ionicons name="briefcase-outline" size={48} color="#d1d5db" />
@@ -422,24 +394,19 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
             </View>
           )}
 
-          {/* Liste des missions */}
           {!loading && (
             <View style={styles.missionsList}>
               {myMissions.map((mission: any) => {
                 const imageUri = getImageUrl(mission.image)
                 const statusStyle = getStatusStyle(mission.status)
                 
-                // ⭐ RÉCUPÉRER LE NOMBRE DE PARTICIPANTS - Comme dans HomeScreen
-                // Essayer d'abord participants, puis currentParticipants, sinon 0
                 const currentParticipants = mission.participants || mission.currentParticipants || 0
 
-                // ⭐ AJOUT: Récupérer les messages mockés pour cette mission
                 const missionMessages = mockMessages[mission.id] || []
                 const unreadCount = missionMessages.length > 0 
-                  ? Math.min(missionMessages.length, 3) // Simulation: 1-3 messages non lus
+                  ? Math.min(missionMessages.length, 3)
                   : 0
 
-                // ⭐ AJOUT: Filtrer les notifications de message pour cette mission spécifique
                 const missionMessageNotifications = notifications.filter(
                   n => n.type === 'message' && 
                        n.data?.missionId === mission.id && 
@@ -449,18 +416,11 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
                 return (
                   <View key={mission.id} style={styles.missionCard}>
 
-                    {/* Image */}
                     {imageUri ? (
                       <Image
                         source={{ uri: imageUri }}
                         style={styles.missionImage}
                         resizeMode="cover"
-                        onError={(error) => {
-                          console.error('❌ Erreur chargement image pour:', mission.title, error.nativeEvent.error)
-                        }}
-                        onLoad={() => {
-                          console.log('✅ Image chargée pour:', mission.title)
-                        }}
                       />
                     ) : (
                       <View style={styles.missionImagePlaceholder}>
@@ -468,7 +428,6 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
                       </View>
                     )}
 
-                    {/* Titre + Status dynamique selon mission.status */}
                     <View style={styles.missionHeader}>
                       <View style={styles.missionTitleContainer}>
                         <Text style={styles.missionTitle}>{mission.title}</Text>
@@ -481,11 +440,9 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
                       </View>
                     </View>
 
-                    {/* Infos */}
                     <View style={styles.missionInfo}>
                       <View style={styles.infoItem}>
                         <Ionicons name="people-outline" size={16} color="#666" />
-                        {/* ⭐ AFFICHAGE DU NOMBRE RÉEL DE PARTICIPANTS - Comme dans HomeScreen */}
                         <Text style={styles.infoText}>
                           {currentParticipants}/{mission.maxParticipants}
                         </Text>
@@ -502,16 +459,13 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
                       )}
                     </View>
 
-                    {/* ⭐ Actions avec BOUTON MESSAGES */}
                     <View style={styles.actions}>
-                      {/* ⭐ BOUTON MESSAGES - MODIFICATION ICI */}
                       <TouchableOpacity 
                         style={styles.messagesButton}
                         onPress={() => handleOpenMessages(mission.id, mission.title)}
                       >
                         <Ionicons name="chatbubble-outline" size={16} color="#7B68EE" />
                         <Text style={styles.messagesButtonText}>Messages</Text>
-                        {/* ⭐ MODIFICATION: Badge avec les vraies notifications de message */}
                         {missionMessageNotifications.length > 0 && (
                           <View style={styles.messageBadge}>
                             <Text style={styles.messageBadgeText}>
@@ -544,12 +498,10 @@ export default function OrganizerDashboardScreen({ onNavigate }: OrganizerDashbo
         </View>
       </ScrollView>
 
-      {/* FAB Créer mission */}
       <TouchableOpacity style={styles.fabButton} onPress={() => onNavigate("organizer-create")}>
         <Ionicons name="add" size={32} color="white" />
       </TouchableOpacity>
 
-      {/* ⭐ SUPPRIMER LA MODALE DE MESSAGERIE (optionnel - vous pouvez la garder si vous voulez) */}
     </View>
   )
 }

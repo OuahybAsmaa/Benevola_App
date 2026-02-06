@@ -7,26 +7,26 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt.strategy';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './user.entity';
-import { NotificationsModule } from '../notifications/notifications.module'; // ⭐ AJOUT
+import { NotificationsModule } from '../notifications/notifications.module'; 
 
 
 @Module({
   imports: [
-    ConfigModule, // ✅ AJOUTER ConfigModule
+    ConfigModule, 
     TypeOrmModule.forFeature([User]),
-    JwtModule.registerAsync({ // ✅ CHANGER de register à registerAsync
+    JwtModule.registerAsync({ 
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get('JWT_SECRET') || 'secret_key',
-        signOptions: { expiresIn: '7d' }, // ✅ Augmenter à 7d au lieu de 15m
+        signOptions: { expiresIn: '7d' }, 
       }),
       inject: [ConfigService],
     }),
     PassportModule.register({ defaultStrategy: 'jwt' }),
-    NotificationsModule, // ⭐ AJOUT: Pour accéder à FirebasePushService
+    NotificationsModule, 
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],
-  exports: [JwtStrategy, PassportModule, JwtModule], // ✅ AJOUTER exports
+  exports: [JwtStrategy, PassportModule, JwtModule], 
 })
 export class AuthModule {}

@@ -12,16 +12,13 @@ export const checkAuthThunk = createAsyncThunk<
     try {
       const token = await SecureStore.getItemAsync("access_token")
 
-      // 🔥 PAS DE TOKEN → PAS CONNECTÉ
       if (!token) {
         return null
       }
-
-      // Token existant → vérifier l'utilisateur
       const user = await authService.getCurrentUser()
       return user
     } catch (error) {
-      return null // 🔥 très important
+      return null 
     }
   }
 )

@@ -117,7 +117,6 @@ export default function EditMissionScreen({ onNavigate, missionId }: EditMission
   const fetchMissionData = async () => {
     try {
       setLoading(true)
-      console.log('🔍 Chargement de la mission:', missionId)
       
       const response = await fetch(`${API_BASE_URL}/missions/${missionId}`)
       
@@ -126,7 +125,6 @@ export default function EditMissionScreen({ onNavigate, missionId }: EditMission
       }
 
       const mission = await response.json()
-      console.log('✅ Mission reçue:', mission)
       
       let latitude = ""
       let longitude = ""
@@ -163,10 +161,7 @@ export default function EditMissionScreen({ onNavigate, missionId }: EditMission
           setSelectedPosition({ latitude: lat, longitude: lng })
         }
       }
-
-      console.log('✅ Formulaire initialisé')
     } catch (error) {
-      console.error('❌ Erreur chargement:', error)
       Alert.alert('Erreur', 'Impossible de charger la mission')
     } finally {
       setLoading(false)
@@ -191,10 +186,8 @@ export default function EditMissionScreen({ onNavigate, missionId }: EditMission
 
       if (!result.canceled && result.assets[0]) {
         setSelectedImage(result.assets[0].uri)
-        console.log('✅ Image sélectionnée:', result.assets[0].uri)
       }
     } catch (error) {
-      console.error('❌ Erreur sélection image:', error)
       Alert.alert('Erreur', 'Impossible de sélectionner l\'image')
     }
   }
@@ -253,8 +246,6 @@ export default function EditMissionScreen({ onNavigate, missionId }: EditMission
         } as any)
       }
 
-      console.log('📤 Envoi de la mise à jour pour mission:', missionId)
-
       const response = await fetch(`${API_BASE_URL}/missions/${missionId}`, {
         method: 'PUT',
         body: formDataToSend,
@@ -269,7 +260,6 @@ export default function EditMissionScreen({ onNavigate, missionId }: EditMission
       }
 
       const updatedMission = await response.json()
-      console.log('✅ Mission mise à jour:', updatedMission)
 
       Alert.alert('Succès', 'Mission mise à jour avec succès', [
         {
@@ -278,7 +268,6 @@ export default function EditMissionScreen({ onNavigate, missionId }: EditMission
         }
       ])
     } catch (error) {
-      console.error('❌ Erreur mise à jour:', error)
       Alert.alert('Erreur', error instanceof Error ? error.message : 'Impossible de mettre à jour la mission')
     } finally {
       setSubmitting(false)
@@ -309,7 +298,6 @@ export default function EditMissionScreen({ onNavigate, missionId }: EditMission
       const { latitude, longitude } = JSON.parse(event.nativeEvent.data)
       setSelectedPosition({ latitude, longitude })
     } catch (e) {
-      console.error('Erreur parsing message WebView:', e)
     }
   }
 

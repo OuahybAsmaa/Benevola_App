@@ -17,10 +17,7 @@ export class MissionParticipantsController {
     private readonly participantsService: MissionParticipantsService,
   ) {}
 
-  // ─────────────────────────────────────────────────────────
-  // S'inscrire à une mission
-  // POST /mission-participants/:missionId/register
-  // ─────────────────────────────────────────────────────────
+
   @UseGuards(AuthGuard('jwt'))
   @Post(':missionId/register')
   async register(@Param('missionId') missionId: string, @Req() req) {
@@ -28,10 +25,6 @@ export class MissionParticipantsController {
     return this.participantsService.register(missionId, userId);
   }
 
-  // ─────────────────────────────────────────────────────────
-  // Se désinscrire d'une mission
-  // DELETE /mission-participants/:missionId/unregister
-  // ─────────────────────────────────────────────────────────
   @UseGuards(AuthGuard('jwt'))
   @Delete(':missionId/unregister')
   async unregister(@Param('missionId') missionId: string, @Req() req) {
@@ -40,19 +33,13 @@ export class MissionParticipantsController {
     return { message: 'Désinscription réussie' };
   }
 
-  // ─────────────────────────────────────────────────────────
-  // Récupérer les participants d'une mission
-  // GET /mission-participants/:missionId/participants
-  // ─────────────────────────────────────────────────────────
+
   @Get(':missionId/participants')
   async getParticipants(@Param('missionId') missionId: string) {
     return this.participantsService.getParticipants(missionId);
   }
 
-  // ─────────────────────────────────────────────────────────
-  // Récupérer les missions auxquelles je suis inscrit
-  // GET /mission-participants/my-missions
-  // ─────────────────────────────────────────────────────────
+
   @UseGuards(AuthGuard('jwt'))
   @Get('my-missions')
   async getMyMissions(@Req() req) {
@@ -60,10 +47,7 @@ export class MissionParticipantsController {
     return this.participantsService.getUserMissions(userId);
   }
 
-  // ─────────────────────────────────────────────────────────
-  // Vérifier si je suis inscrit à une mission
-  // GET /mission-participants/:missionId/check-registration
-  // ─────────────────────────────────────────────────────────
+
   @UseGuards(AuthGuard('jwt'))
   @Get(':missionId/check-registration')
   async checkRegistration(@Param('missionId') missionId: string, @Req() req) {

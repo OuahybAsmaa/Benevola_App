@@ -1,18 +1,18 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
-import { MissionsModule } from './missions/missions.module'; // AJOUT
+import { MissionsModule } from './missions/missions.module'; 
 import { ProfileModule } from './profile/profile.module';
 import { MissionParticipantsModule } from './mission-participants/mission-participants.module';
 import { MessagesModule } from './messages/messages.module';
 import { TesterModule } from './tester/tester.module';
 import { NotificationsModule } from './notifications/notifications.module';
-import { CustomConfigModule } from './config/config.module'; // AJOUT
+import { CustomConfigModule } from './config/config.module'; 
 
 
 @Module({
   imports: [
-    CustomConfigModule, // DOIT ÊTRE LE PREMIER
+    CustomConfigModule, 
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: 'localhost',
@@ -26,7 +26,7 @@ import { CustomConfigModule } from './config/config.module'; // AJOUT
     }),
     AuthModule,
     MissionsModule,
-    ProfileModule, // AJOUT
+    ProfileModule, 
     MissionParticipantsModule, MessagesModule, TesterModule, NotificationsModule,
     
   ],

@@ -1,5 +1,3 @@
-"use client"
-
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 
@@ -49,7 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false)
     }
 
-    setTimeout(checkAuth, 1500) // Simulate splash screen delay
+    setTimeout(checkAuth, 1500) 
   }, [])
 
   const login = async (email: string, password: string, role: "benevole" | "organisation") => {

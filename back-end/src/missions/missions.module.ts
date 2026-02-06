@@ -13,7 +13,7 @@ import { MissionParticipantsModule } from '../mission-participants/mission-parti
     MulterModule.register({
       dest: './uploads/missions',
     }),
-    forwardRef(() => MissionParticipantsModule), // ⭐ AJOUTER CETTE LIGNE
+    forwardRef(() => MissionParticipantsModule), 
   ],
   controllers: [MissionsController],
   providers: [MissionsService],

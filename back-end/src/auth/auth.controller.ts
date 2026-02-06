@@ -7,7 +7,7 @@ import { FirebasePushService } from '../notifications/firebase-push.service';
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
-    private readonly firebasePushService: FirebasePushService // Ajouter cette injection
+    private readonly firebasePushService: FirebasePushService 
   ) {}
 
   @Post('login')
@@ -27,13 +27,13 @@ export class AuthController {
 
   @UseGuards(AuthGuard('jwt')) 
   @Post('logout')
-  logout(@Req() req: any) { // Ajouter le type pour req
-    return this.authService.logout(req.user.sub); // sub = user.id
+  logout(@Req() req: any) { 
+    return this.authService.logout(req.user.sub); 
   }
 
   @UseGuards(AuthGuard('jwt')) 
   @Get('me')
-  me(@Req() req: any) { // Ajouter le type pour req
+  me(@Req() req: any) { 
     return this.authService.getUserById(req.user.sub);
   }
 
@@ -41,7 +41,7 @@ export class AuthController {
   @Post('fcm-token')
   @UseGuards(AuthGuard('jwt'))
   async registerFcmToken(
-    @Req() req: any, // Utiliser @Req() au lieu de @Request()
+    @Req() req: any, 
     @Body() body: { fcmToken: string },
   ) {
     await this.firebasePushService.registerFcmToken(req.user.id, body.fcmToken);
@@ -51,7 +51,7 @@ export class AuthController {
   
   @Patch('fcm-token/remove')
   @UseGuards(AuthGuard('jwt'))
-  async removeFcmToken(@Req() req: any) { // Utiliser @Req() au lieu de @Request()
+  async removeFcmToken(@Req() req: any) { 
     await this.firebasePushService.unregisterFcmToken(req.user.id);
     return { message: 'FCM token removed successfully' };
   }

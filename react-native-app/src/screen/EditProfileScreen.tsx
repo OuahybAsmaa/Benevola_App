@@ -14,7 +14,7 @@ import { useAuth } from "../hooks/useAuth"
 import * as ImagePicker from "expo-image-picker"
 import MobileHeader from "../components/MobileHeader"
 import { styles } from '../style/benevole/EditProfileScreen.style'
-import { getImageUrl } from "../config/api.config" // ✅ Import
+import { getImageUrl } from "../config/api.config" 
 
 interface EditProfileScreenProps {
   onNavigate: (screen: string) => void
@@ -41,8 +41,8 @@ export default function EditProfileScreen({ onNavigate }: EditProfileScreenProps
 
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
-        allowsEditing: true, // ✅ Permet de recadrer
-        aspect: [1, 1], // ✅ Format carré
+        allowsEditing: true, 
+        aspect: [1, 1], 
         quality: 0.8,
       })
 
@@ -57,14 +57,14 @@ export default function EditProfileScreen({ onNavigate }: EditProfileScreenProps
 
   const handleSave = async () => {
     try {
-      // 1. Upload avatar si nécessaire
+      
       if (newPhotoUri) {
         setIsUploadingAvatar(true)
         await uploadAvatar(newPhotoUri)
         setIsUploadingAvatar(false)
       }
 
-      // 2. Mise à jour des autres champs
+      
       const updateData: any = {}
       if (firstName !== user.firstName) updateData.firstName = firstName
       if (lastName !== user.lastName) updateData.lastName = lastName
@@ -82,7 +82,7 @@ export default function EditProfileScreen({ onNavigate }: EditProfileScreenProps
     }
   }
 
-  // ✅ URL de l'avatar
+  
   const avatarUrl = getImageUrl(user.avatar)
 
   return (
@@ -95,15 +95,12 @@ export default function EditProfileScreen({ onNavigate }: EditProfileScreenProps
 
       <ScrollView style={styles.scrollView}>
         <View style={styles.avatarSection}>
-          {/* ✅ Affichage de l'avatar avec gestion correcte */}
           {newPhotoUri ? (
             <Image source={{ uri: newPhotoUri }} style={styles.avatarImage} />
           ) : avatarUrl ? (
             <Image 
               source={{ uri: avatarUrl }} 
               style={styles.avatarImage}
-              onError={() => console.log('❌ Erreur chargement avatar')}
-              onLoad={() => console.log('✅ Avatar chargé')}
             />
           ) : (
             <View style={styles.avatarEmptyPlaceholder}>

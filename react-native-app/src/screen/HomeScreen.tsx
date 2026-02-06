@@ -2,9 +2,8 @@
 import { useState, useEffect } from "react"
 import { View, Text, TextInput, ScrollView, ActivityIndicator, RefreshControl, TouchableOpacity, Alert, Platform, Linking } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
-import * as Location from 'expo-location' // 🔥 AJOUT
+import * as Location from 'expo-location'
 import MobileHeader from "../components/MobileHeader"
-import CategoryButton from "../components/CategoryButton"
 import MissionCard from "../components/MissionCard"
 import { useMission } from "../hooks/useMissions"
 import { colors } from "../style/theme"
@@ -15,16 +14,6 @@ import { Mission } from "../services/mission.service"
 import { getImageUrl } from "../config/api.config"
 import { useNotifications } from "../hooks/useNotifications"
 
-const categories = [
-  { id: "all", icon: "📋", label: "Toutes" },
-  { id: "Environnement", icon: "🌱", label: "Environnement" },
-  { id: "Social", icon: "🤝", label: "Social" },
-  { id: "Éducation", icon: "📚", label: "Éducation" },
-  { id: "Santé", icon: "❤️", label: "Santé" },
-  { id: "Culture", icon: "🎭", label: "Culture" },
-]
-
-// 🔥 AJOUT: Constantes pour la géolocalisation
 const RADIUS_KM = 50;
 const RADIUS_METERS = RADIUS_KM * 1000;
 
@@ -45,7 +34,6 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
   const [cityQuery, setCityQuery] = useState("")
   const [refreshing, setRefreshing] = useState(false)
 
-  // 🔥 AJOUT: États pour la géolocalisation
   const [showNearbyOnly, setShowNearbyOnly] = useState(false)
   const [loadingLocation, setLoadingLocation] = useState(false)
   const [userLocation, setUserLocation] = useState<{
@@ -58,7 +46,7 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
     loading,
     error,
     getAllMissions,
-    getMissionsNearby, // 🔥 AJOUT
+    getMissionsNearby,
   } = useMission()
 
   useEffect(() => {
@@ -67,24 +55,16 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
 
   useEffect(() => {
     if (missions.length > 0) {
-      console.log("📋 Total missions chargées:", missions.length);
       missions.forEach((m, index) => {
         const imageUrl = getImageUrl(m.image);
-        console.log(`Mission ${index + 1}:`, {
-          title: m.title,
-          imagePath: m.image,
-          fullImageUrl: imageUrl
-        });
       });
     }
   }, [missions])
 
-  // 🔥 AJOUT: Fonction pour afficher les missions proches
   const handleShowNearbyMissions = async () => {
     try {
       setLoadingLocation(true)
 
-      // Demander la permission de localisation
       const { status } = await Location.requestForegroundPermissionsAsync()
       
       if (status !== 'granted') {
@@ -109,7 +89,6 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
         return
       }
 
-      // Récupérer la position actuelle
       Alert.alert(
         'Localisation en cours',
         'Récupération de votre position GPS...',
@@ -121,15 +100,8 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
       })
 
       const { latitude, longitude } = location.coords
-      console.log("=== POSITION GPS RÉCUPÉRÉE ===");
-      console.log("Latitude  :", latitude);
-console.log("Longitude :", longitude);
-console.log("Précision :", location.coords.accuracy, "mètres");
       setUserLocation({ latitude, longitude })
 
-      console.log('📍 Position du bénévole:', { latitude, longitude })
-
-      // Récupérer les missions proches
       await getMissionsNearby(latitude, longitude, RADIUS_METERS)
       setShowNearbyOnly(true)
 
@@ -140,7 +112,6 @@ console.log("Précision :", location.coords.accuracy, "mètres");
       )
 
     } catch (error: any) {
-      console.error('❌ Erreur géolocalisation:', error)
       Alert.alert(
         'Erreur',
         'Impossible de récupérer votre position. Assurez-vous que le GPS est activé.',
@@ -151,7 +122,6 @@ console.log("Précision :", location.coords.accuracy, "mètres");
     }
   }
 
-  // 🔥 AJOUT: Fonction pour afficher toutes les missions
   const handleShowAllMissions = async () => {
     setShowNearbyOnly(false)
     setUserLocation(null)
@@ -161,14 +131,12 @@ console.log("Précision :", location.coords.accuracy, "mètres");
   const onRefresh = async () => {
     setRefreshing(true)
     try {
-      // 🔥 MODIFICATION: Rafraîchir selon le mode actif
       if (showNearbyOnly && userLocation) {
         await getMissionsNearby(userLocation.latitude, userLocation.longitude, RADIUS_METERS)
       } else {
         await getAllMissions()
       }
     } catch (err) {
-      console.error("Erreur refresh:", err)
     } finally {
       setRefreshing(false)
     }
@@ -207,7 +175,6 @@ console.log("Précision :", location.coords.accuracy, "mètres");
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.primary]} />
         }
       >
-        {/* 🔥 AJOUT: Bouton de géolocalisation (remplace la barre de recherche) */}
         <View style={styles.searchContainer}>
           {!showNearbyOnly ? (
             <TouchableOpacity
@@ -239,32 +206,12 @@ console.log("Précision :", location.coords.accuracy, "mètres");
           )}
         </View>
 
-        {/* Categories - 🔥 SUPPRIMÉ comme demandé */}
-        {/* Si vous voulez garder les catégories, décommentez ce bloc:
-        <View style={styles.categoriesContainer}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesContent}>
-            {categories.map((category) => (
-              <View key={category.id} style={styles.categoryWrapper}>
-                <CategoryButton
-                  icon={category.icon}
-                  label={category.label}
-                  isActive={activeCategory === category.id}
-                  onClick={() => setActiveCategory(category.id)}
-                />
-              </View>
-            ))}
-          </ScrollView>
-        </View>
-        */}
-
-        {/* Section Title - 🔥 MODIFICATION: Titre dynamique */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>
             {showNearbyOnly ? 'Missions à proximité' : 'Missions près de vous'}
           </Text>
         </View>
 
-        {/* Loading */}
         {loading && !refreshing && (
           <View style={styles.centerContainer}>
             <ActivityIndicator size="large" color={colors.primary} />
@@ -272,7 +219,6 @@ console.log("Précision :", location.coords.accuracy, "mètres");
           </View>
         )}
 
-        {/* Erreur */}
         {!loading && error && (
           <View style={styles.centerContainer}>
             <Ionicons name="alert-circle" size={48} color={colors.error} />
@@ -280,7 +226,6 @@ console.log("Précision :", location.coords.accuracy, "mètres");
           </View>
         )}
 
-        {/* Aucune mission trouvée - 🔥 MODIFICATION: Message adaptatif */}
         {!loading && !error && displayMissions.length === 0 && (
           <View style={styles.centerContainer}>
             <Ionicons 
@@ -299,7 +244,6 @@ console.log("Précision :", location.coords.accuracy, "mètres");
           </View>
         )}
 
-        {/* Liste des missions - 🔥 MODIFICATION: Passer userLocation */}
         {!loading && !error && displayMissions.length > 0 && (
           <View style={styles.missionsContainer}>
             {displayMissions.map((mission) => (
@@ -307,7 +251,7 @@ console.log("Précision :", location.coords.accuracy, "mètres");
                 key={mission.id}
                 mission={mission}
                 onClick={() => onNavigate("mission-detail", mission.id)}
-                userLocation={userLocation} // 🔥 AJOUT
+                userLocation={userLocation}
               />
             ))}
           </View>

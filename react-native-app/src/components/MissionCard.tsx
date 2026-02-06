@@ -1,3 +1,4 @@
+import { memo, useCallback, useMemo } from "react";
 import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { getImageUrl } from "../config/api.config";
@@ -13,20 +14,20 @@ interface MissionCardProps {
     image?: string;
     maxParticipants: number;
     participants?: number;
-    currentParticipants?: number; // 🔥 AJOUTÉ depuis le backend
+    currentParticipants?: number; 
     organizer?: {
       firstName?: string;
       lastName?: string;
       avatar?: string;
     };
-    distance?: string | number; // 🔥 Distance depuis le backend (en mètres)
+    distance?: string | number; 
     position?: {
       type: string;
-      coordinates: [number, number]; // [longitude, latitude]
+      coordinates: [number, number];
     };
   };
   onClick: () => void;
-  userLocation?: { // 🔥 AJOUTÉ pour calcul côté client
+  userLocation?: { 
     latitude: number;
     longitude: number;
   } | null;
@@ -41,47 +42,68 @@ const categoryColors: Record<string, string> = {
   all: "#6B7280",
 };
 
-export default function MissionCard({ mission, onClick, userLocation }: MissionCardProps) {
-  // ✅ Nombre de participants (priorité à currentParticipants du backend)
+const MissionCard = memo(({ mission, onClick, userLocation }: MissionCardProps) => {
+  const handleClick = useCallback(() => {
+    onClick();
+  }, [onClick]);
+
   const participants = mission.currentParticipants ?? mission.participants ?? 0;
   const max = mission.maxParticipants ?? 1;
   const progress = (participants / max) * 100;
 
-  // ✅ Nom de l'organisateur
-  const orgName =
+  const orgName = useMemo(() =>
     mission.organizer
       ? `${mission.organizer.firstName || ""} ${mission.organizer.lastName || ""}`.trim() || "Organisation"
-      : "Organisation";
+      : "Organisation",
+    [mission.organizer]
+  );
 
-  // ✅ Avatar de l'organisateur (image ou initiale)
-  const orgAvatarUrl = mission.organizer?.avatar ? getImageUrl(mission.organizer.avatar) : null;
-  const orgInitial = orgName.charAt(0).toUpperCase() || "?";
+  const orgAvatarUrl = useMemo(() => 
+    mission.organizer?.avatar ? getImageUrl(mission.organizer.avatar) : null,
+    [mission.organizer?.avatar]
+  );
 
-  // ✅ Image de la mission
-  const imageUri = getImageUrl(mission.image);
+  const orgInitial = useMemo(() => 
+    orgName.charAt(0).toUpperCase() || "?",
+    [orgName]
+  );
 
-  // 🔥 FONCTION POUR FORMATER LA DISTANCE
-  const formatDistance = (distanceInMeters: number): string => {
+  const imageUri = useMemo(() => 
+    getImageUrl(mission.image),
+    [mission.image]
+  );
+
+  const formatDistance = useCallback((distanceInMeters: number): string => {
     if (distanceInMeters < 1000) {
       return `${Math.round(distanceInMeters)} m`;
     } else {
       return `${(distanceInMeters / 1000).toFixed(1)} km`;
     }
-  };
+  }, []);
 
-  // 🔥 CALCULER LA DISTANCE
-  const getDistance = (): string | null => {
-    // Si la mission retourne déjà une distance depuis le backend
+  const calculateDistance = useCallback((lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371e3; 
+    const φ1 = (lat1 * Math.PI) / 180;
+    const φ2 = (lat2 * Math.PI) / 180;
+    const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+    const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+
+    const a =
+      Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+      Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c; 
+  }, []);
+
+  const getDistance = useCallback((): string | null => {
     if (typeof mission.distance === 'number') {
       return formatDistance(mission.distance);
     }
-
-    // Si la distance est déjà formatée en string
     if (typeof mission.distance === 'string' && mission.distance !== mission.location) {
       return mission.distance;
     }
-
-    // Sinon, calculer côté client si on a la position de l'utilisateur et de la mission
     if (!userLocation || !mission.position?.coordinates) {
       return null;
     }
@@ -95,41 +117,18 @@ export default function MissionCard({ mission, onClick, userLocation }: MissionC
     );
 
     return formatDistance(distanceInMeters);
-  };
+  }, [mission.distance, mission.location, mission.position, userLocation, formatDistance, calculateDistance]);
 
-  // 🔥 FORMULE DE HAVERSINE pour calculer la distance entre deux points GPS
-  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-    const R = 6371e3; // Rayon de la Terre en mètres
-    const φ1 = (lat1 * Math.PI) / 180;
-    const φ2 = (lat2 * Math.PI) / 180;
-    const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-    const Δλ = ((lon2 - lon1) * Math.PI) / 180;
-
-    const a =
-      Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-      Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-    return R * c; // Distance en mètres
-  };
-
-  const distanceText = getDistance();
+  const distanceText = useMemo(() => getDistance(), [getDistance]);
 
   return (
-    <TouchableOpacity style={styles.card} onPress={onClick} activeOpacity={0.8}>
+    <TouchableOpacity style={styles.card} onPress={handleClick} activeOpacity={0.8}>
       <View style={styles.imageContainer}>
         {imageUri ? (
           <Image
             source={{ uri: imageUri }}
             style={styles.image}
             resizeMode="cover"
-            onError={(error) => {
-              console.error('❌ Erreur chargement image:', mission.title, error.nativeEvent.error);
-            }}
-            onLoad={() => {
-              console.log('✅ Image chargée:', mission.title);
-            }}
           />
         ) : (
           <View style={styles.imagePlaceholder}>
@@ -153,7 +152,6 @@ export default function MissionCard({ mission, onClick, userLocation }: MissionC
         </Text>
 
         <View style={styles.details}>
-          {/* 🔥 LOCALISATION AVEC DISTANCE */}
           <View style={styles.detailRow}>
             <Ionicons name="location-outline" size={16} color="#7B68EE" />
             <Text style={styles.detailText} numberOfLines={1}>
@@ -190,12 +188,10 @@ export default function MissionCard({ mission, onClick, userLocation }: MissionC
 
         <View style={styles.footer}>
           <View style={styles.organizationInfo}>
-            {/* ✅ AVATAR AVEC IMAGE OU INITIALE */}
             {orgAvatarUrl ? (
               <Image
                 source={{ uri: orgAvatarUrl }}
                 style={styles.orgAvatarImage}
-                onError={() => console.log('❌ Erreur avatar organisateur')}
               />
             ) : (
               <View style={styles.orgAvatar}>
@@ -212,7 +208,9 @@ export default function MissionCard({ mission, onClick, userLocation }: MissionC
       </View>
     </TouchableOpacity>
   );
-}
+});
+
+export default MissionCard;
 
 const styles = StyleSheet.create({
   card: {
@@ -279,7 +277,6 @@ const styles = StyleSheet.create({
     color: "#6B7280",
     flex: 1,
   },
-  // 🔥 STYLE POUR LA DISTANCE (en gras et couleur primaire)
   distanceText: {
     fontWeight: "600",
     color: "#7B68EE",

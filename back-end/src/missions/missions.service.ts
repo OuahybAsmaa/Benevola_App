@@ -1,4 +1,3 @@
-// src/missions/missions.service.ts
 import { Injectable, NotFoundException, ForbiddenException, Inject, forwardRef, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -14,9 +13,6 @@ export class MissionsService {
     private participantsService: MissionParticipantsService,
   ) {}
 
-  // ─────────────────────────────────────────────────────────
-  // Vérifie si une mission doit être marquée comme 'finished'
-  // ─────────────────────────────────────────────────────────
   private async checkAndUpdateMissionStatus(mission: Mission): Promise<Mission> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -32,9 +28,6 @@ export class MissionsService {
     return mission;
   }
 
-  // ─────────────────────────────────────────────────────────
-  // Met à jour en masse les missions expirées pour un organisateur
-  // ─────────────────────────────────────────────────────────
   private async syncExpiredMissions(organizerId: string): Promise<void> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -49,9 +42,6 @@ export class MissionsService {
       .execute();
   }
 
-  // ─────────────────────────────────────────────────────────
-  // Ajouter le compte de participants à une mission
-  // ─────────────────────────────────────────────────────────
   private async addParticipantCount(mission: Mission): Promise<any> {
     const participantCount = await this.participantsService.countParticipants(mission.id);
     return {
@@ -60,9 +50,6 @@ export class MissionsService {
     };
   }
 
-  // ─────────────────────────────────────────────────────────
-  // Ajouter le compte de participants à plusieurs missions
-  // ─────────────────────────────────────────────────────────
   private async addParticipantCounts(missions: Mission[]): Promise<any[]> {
     if (missions.length === 0) {
       return [];
@@ -77,7 +64,6 @@ export class MissionsService {
     }));
   }
 
-  // ─────────────────────────────────────────────────────────
   async create(data: any): Promise<Mission> {
     const missionData: any = {
       title: data.title,
@@ -104,7 +90,6 @@ export class MissionsService {
     return this.findOne(newMission.id);
   }
 
-  // ─────────────────────────────────────────────────────────
   async findAll(): Promise<any[]> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -126,7 +111,6 @@ export class MissionsService {
     return this.addParticipantCounts(missions);
   }
 
-  // ─────────────────────────────────────────────────────────
   async findOne(id: string): Promise<any> {
     const mission = await this.missionRepository.findOne({
       where: { id },
@@ -141,7 +125,6 @@ export class MissionsService {
     return this.addParticipantCount(updatedMission);
   }
 
-  // ─────────────────────────────────────────────────────────
   async findByOrganizer(organizerId: string): Promise<any[]> {
     await this.syncExpiredMissions(organizerId);
 
@@ -157,7 +140,6 @@ export class MissionsService {
     return this.addParticipantCounts(missions);
   }
 
-  // ─────────────────────────────────────────────────────────
   async findFinishedByOrganizer(organizerId: string): Promise<any[]> {
     await this.syncExpiredMissions(organizerId);
 
@@ -170,65 +152,48 @@ export class MissionsService {
     return this.addParticipantCounts(missions);
   }
 
-  // ─────────────────────────────────────────────────────────
-  // 🔥 NOUVELLE VERSION avec calcul de distance et tri
-  // ─────────────────────────────────────────────────────────
-async findNearby(latitude: number, longitude: number, radiusInMeters: number): Promise<any[]> {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  async findNearby(latitude: number, longitude: number, radiusInMeters: number): Promise<any[]> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-  console.log('🔍 Recherche missions proches avec:', {
-    latitude,
-    longitude,
-    radius: radiusInMeters + ' mètres',
-    today
-  });
+    const missions = await this.missionRepository
+      .createQueryBuilder('mission')
+      .leftJoinAndSelect('mission.organizer', 'organizer')
+      .addSelect(
+        `ST_Distance(
+          mission.position::geography,
+          ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography
+        )`,
+        'distance'
+      )
+      .where('mission.status = :status', { status: 'active' })
+      .andWhere('mission.date >= :today', { today })
+      .andWhere(
+        `ST_DWithin(
+          mission.position::geography,
+          ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography,
+          :radius
+        )`
+      )
+      .setParameters({ 
+        lng: longitude,    
+        lat: latitude,     
+        radius: radiusInMeters 
+      })
+      .orderBy('distance', 'ASC')
+      .getRawAndEntities();
 
-  // 🔥 SOLUTION: Utiliser des paramètres positionnels explicites
-  const missions = await this.missionRepository
-    .createQueryBuilder('mission')
-    .leftJoinAndSelect('mission.organizer', 'organizer')
-    .addSelect(
-      `ST_Distance(
-        mission.position::geography,
-        ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography
-      )`,
-      'distance'
-    )
-    .where('mission.status = :status', { status: 'active' })
-    .andWhere('mission.date >= :today', { today })
-    .andWhere(
-      `ST_DWithin(
-        mission.position::geography,
-        ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography,
-        :radius
-      )`
-    )
-    .setParameters({ 
-      lng: longitude,    // ✅ longitude en premier
-      lat: latitude,     // ✅ latitude en second
-      radius: radiusInMeters 
-    })
-    .orderBy('distance', 'ASC')
-    .getRawAndEntities();
+    const missionsWithDistance = missions.entities.map((mission, index) => {
+      const distanceValue = missions.raw[index].distance;
+      return {
+        ...mission,
+        distance: distanceValue,
+      };
+    });
 
-  console.log('📊 Résultats trouvés:', missions.entities.length);
+    return this.addParticipantCounts(missionsWithDistance);
+  }
 
-  // Combiner les entités avec les distances calculées
-  const missionsWithDistance = missions.entities.map((mission, index) => {
-    const distanceValue = missions.raw[index].distance;
-    console.log(`✅ Mission: ${mission.title} - Distance: ${distanceValue}m`);
-    return {
-      ...mission,
-      distance: distanceValue,
-    };
-  });
-
-  // Ajouter le compte des participants
-  return this.addParticipantCounts(missionsWithDistance);
-}
-
-  // ─────────────────────────────────────────────────────────
   async update(id: string, organizerId: string, data: any): Promise<any> {
     const mission = await this.findOne(id);
 
@@ -261,7 +226,6 @@ async findNearby(latitude: number, longitude: number, radiusInMeters: number): P
     return this.addParticipantCount(savedMission);
   }
 
-  // ─────────────────────────────────────────────────────────
   async delete(id: string, organizerId: string): Promise<void> {
     const mission = await this.missionRepository.findOne({ where: { id } });
 
@@ -282,6 +246,5 @@ async findNearby(latitude: number, longitude: number, radiusInMeters: number): P
     }
 
     await this.missionRepository.remove(mission);
-    console.log(`Mission ${id} supprimée par ${organizerId}`);
   }
 }

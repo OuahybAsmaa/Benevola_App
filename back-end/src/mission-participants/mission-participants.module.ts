@@ -10,10 +10,10 @@ import { MissionsModule } from '../missions/missions.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([MissionParticipant, Mission]),
-    forwardRef(() => MissionsModule), // ⭐ AJOUTER POUR ÉVITER CIRCULAR DEPENDENCY
+    forwardRef(() => MissionsModule), 
   ],
   controllers: [MissionParticipantsController],
   providers: [MissionParticipantsService],
-  exports: [MissionParticipantsService], // ⭐ EXPORTER LE SERVICE
+  exports: [MissionParticipantsService], 
 })
 export class MissionParticipantsModule {}

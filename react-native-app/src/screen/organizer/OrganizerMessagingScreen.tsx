@@ -52,9 +52,8 @@ export default function OrganizerMessagingScreen({
   const [isOtherUserTyping, setIsOtherUserTyping] = useState(false)
   const scrollViewRef = useRef<ScrollView>(null)
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const hasScrolledToBottom = useRef(false) // ⭐ NOUVEAU : Suivi du scroll
+  const hasScrolledToBottom = useRef(false)
 
-  // 🔌 WebSocket hook
   const {
     connected,
     newMessage: socketNewMessage,
@@ -65,7 +64,6 @@ export default function OrganizerMessagingScreen({
     sendStopTyping,
   } = useSocket()
 
-  // ⭐ GESTION DU CLAVIER
   useEffect(() => {
     if (Platform.OS === "android") {
       const keyboardDidShowListener = Keyboard.addListener(
@@ -83,12 +81,19 @@ export default function OrganizerMessagingScreen({
     }
   }, [])
 
-  // ⭐ Charger les conversations au montage
+useEffect(() => {
+  return () => {
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current)
+      typingTimeoutRef.current = null
+    }
+  }
+}, [])
+
   useEffect(() => {
     loadConversations()
   }, [])
 
-  // ⭐ CORRECTION : Fonction pour scroll automatique vers le bas
   const scrollToBottom = (animated = true) => {
     if (scrollViewRef.current) {
       setTimeout(() => {
@@ -98,17 +103,13 @@ export default function OrganizerMessagingScreen({
     }
   }
 
-  // ⭐ Écouter les nouveaux messages via WebSocket
   useEffect(() => {
     if (socketNewMessage) {
-      console.log('📨 Nouveau message reçu via WebSocket:', socketNewMessage)
       
-      // ⭐ CORRECTION : Ne recharger les conversations QUE si on est PAS dans une conversation
       if (!selectedConversation) {
         loadConversations()
       }
 
-      // Si on est dans une conversation, mettre à jour les messages
       if (selectedConversation) {
         const isForThisConversation =
           (socketNewMessage.senderId === selectedConversation.userId && 
@@ -120,34 +121,26 @@ export default function OrganizerMessagingScreen({
           !selectedConversation.missionId || 
           socketNewMessage.missionId === selectedConversation.missionId
 
-        console.log('🔍 Message pour cette conversation?', isForThisConversation && isSameMission)
-
         if (isForThisConversation && isSameMission) {
           setMessages((prev) => {
-            // Éviter les doublons
             if (prev.some((m) => m.id === socketNewMessage.id)) {
-              console.log('⚠️ Message déjà présent, ignoré')
               return prev
             }
-            console.log('✅ Ajout du message à la liste')
             return [...prev, socketNewMessage]
           })
 
-          // ⭐ CORRECTION : Scroll automatique vers le bas
           scrollToBottom()
         }
       }
     }
   }, [socketNewMessage, selectedConversation])
 
-  // ⭐ CORRECTION : Scroll automatique au chargement des messages
   useEffect(() => {
     if (messages.length > 0 && !hasScrolledToBottom.current) {
       scrollToBottom(false)
     }
   }, [messages])
 
-  // ⭐ Détecter si l'autre utilisateur tape
   useEffect(() => {
     if (selectedConversation) {
       setIsOtherUserTyping(typingUsers.has(selectedConversation.userId))
@@ -159,14 +152,12 @@ export default function OrganizerMessagingScreen({
     try {
       const fetchedConversations = await getUserConversations()
       
-      // Filtrer par mission si spécifié
       if (missionId) {
         setConversations(fetchedConversations.filter(c => c.missionId === missionId))
       } else {
         setConversations(fetchedConversations)
       }
     } catch (error) {
-      console.error("❌ Erreur chargement conversations:", error)
     } finally {
       setLoading(false)
     }
@@ -174,7 +165,7 @@ export default function OrganizerMessagingScreen({
 
   const loadConversationMessages = async (conversation: Conversation) => {
     setLoadingMessages(true)
-    hasScrolledToBottom.current = false // ⭐ NOUVEAU : Réinitialiser le flag
+    hasScrolledToBottom.current = false
     try {
       const { messages: fetchedMessages } = await getConversation(
         conversation.userId,
@@ -182,20 +173,16 @@ export default function OrganizerMessagingScreen({
         1,
         50
       )
-      console.log('📥 Messages chargés:', fetchedMessages.length)
       setMessages(fetchedMessages)
 
-      // Marquer comme lu
       if (fetchedMessages.length > 0) {
         await apiMarkAsRead(conversation.userId, conversation.missionId)
       }
 
-      // ⭐ CORRECTION : Scroll vers le bas après un court délai
       setTimeout(() => {
         scrollToBottom(false)
       }, 200)
     } catch (error) {
-      console.error("❌ Erreur chargement messages:", error)
     } finally {
       setLoadingMessages(false)
     }
@@ -205,7 +192,7 @@ export default function OrganizerMessagingScreen({
     setSelectedConversation(conversation)
     setMessageText("")
     setMessages([])
-    hasScrolledToBottom.current = false // ⭐ NOUVEAU : Réinitialiser
+    hasScrolledToBottom.current = false
     loadConversationMessages(conversation)
   }
 
@@ -216,12 +203,10 @@ export default function OrganizerMessagingScreen({
     const messageContent = messageText.trim()
     setMessageText("")
 
-    // Arrêter l'indicateur de frappe
     sendStopTyping(selectedConversation.userId, selectedConversation.missionId)
 
-    // ✅ Créer un message temporaire avec un ID unique
     const tempMessage: Message = {
-      id: `temp-${Date.now()}`, // ID temporaire
+      id: `temp-${Date.now()}`,
       senderId: user.id,
       receiverId: selectedConversation.userId,
       missionId: selectedConversation.missionId,
@@ -230,28 +215,20 @@ export default function OrganizerMessagingScreen({
       createdAt: new Date().toISOString(),
     }
 
-    // ✅ Ajouter immédiatement à l'interface
-    console.log('📤 Ajout du message temporaire à l\'interface')
     setMessages((prev) => [...prev, tempMessage])
 
-    // ⭐ CORRECTION : Scroll vers le bas
     scrollToBottom()
 
     try {
-      // Envoyer via WebSocket si connecté
       if (connected) {
-        console.log('📡 Envoi via WebSocket')
         socketSendMessage(
           selectedConversation.userId,
           messageContent,
           selectedConversation.missionId
         )
       } else {
-        console.log('📡 Mode hors ligne - message local uniquement')
       }
     } catch (error) {
-      console.error("❌ Erreur envoi message:", error)
-      // En cas d'erreur, retirer le message temporaire et restaurer le texte
       setMessages((prev) => prev.filter(m => m.id !== tempMessage.id))
       setMessageText(messageContent)
     } finally {
@@ -259,7 +236,6 @@ export default function OrganizerMessagingScreen({
     }
   }
 
-  // Gérer la saisie avec indicateur "en train de taper"
   const handleTextChange = (text: string) => {
     setMessageText(text)
 
@@ -274,15 +250,12 @@ export default function OrganizerMessagingScreen({
       return
     }
 
-    // Envoyer l'événement "typing"
     sendTyping(selectedConversation.userId, selectedConversation.missionId)
 
-    // Annuler le timeout précédent
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current)
     }
 
-    // Arrêter après 2 secondes d'inactivité
     typingTimeoutRef.current = setTimeout(() => {
       sendStopTyping(selectedConversation.userId, selectedConversation.missionId)
     }, 2000)
@@ -331,7 +304,6 @@ export default function OrganizerMessagingScreen({
         <View style={{ width: 40 }} />
       </View>
 
-      {/* Indicateur de connexion WebSocket */}
       {!connected && (
         <View style={styles.connectionBanner}>
           <Ionicons name="cloud-offline-outline" size={16} color="#ff6b6b" />
@@ -409,8 +381,6 @@ export default function OrganizerMessagingScreen({
                 }
               }}
             >
-              {/* ⭐ OPTION 1 : SUPPRIMER LE SPINNER DE CHARGEMENT */}
-              {/* On affiche directement les messages, même pendant le chargement */}
               <>
                 {messages.map((msg) => {
                   const isMe = msg.senderId === user?.id
@@ -438,7 +408,6 @@ export default function OrganizerMessagingScreen({
                   )
                 })}
 
-                {/* Indicateur "en train de taper" */}
                 {isOtherUserTyping && (
                   <View style={styles.typingIndicator}>
                     <View style={styles.typingDot} />

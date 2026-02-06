@@ -25,14 +25,13 @@ export class Mission {
   @Column({ length: 500 })
   location: string;
 
-  // Géométrie spatiale - CORRIGÉ
   @Column({
     type: 'geometry',
     spatialFeatureType: 'Point',
     srid: 4326,
     nullable: true,
   })
-  position?: any; // Utiliser 'any' pour éviter les conflits de typage
+  position?: any; 
 
   @Column({ name: 'max_participants', type: 'int' })
   maxParticipants: number;
@@ -57,5 +56,5 @@ export class Mission {
   updatedAt: Date;
 
   @Column({ length: 20, default: 'active' })
-  status: string; // 'active' | 'complete' | 'finished
+  status: string; 
 }

@@ -33,5 +33,5 @@ export class MissionParticipant {
   registeredAt: Date;
 
   @Column({ length: 20, default: 'registered' })
-  status: string; // 'registered' | 'cancelled'
+  status: string; 
 }

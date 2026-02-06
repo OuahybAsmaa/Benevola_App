@@ -45,7 +45,6 @@ export class Notification {
   @Column({ name: 'is_read', default: false })
   isRead: boolean;
 
-  // Données additionnelles (optionnel)
   @Column({ type: 'jsonb', nullable: true })
   data?: {
     missionId?: string;

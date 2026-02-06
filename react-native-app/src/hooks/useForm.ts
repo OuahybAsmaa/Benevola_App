@@ -20,7 +20,6 @@ export function useForm<T extends Record<string, any>>({
   const handleChange = useCallback((field: keyof T, value: any) => {
     setValues((prev) => ({ ...prev, [field]: value }))
     
-    // Clear error when user types
     if (errors[field]) {
       setErrors((prev) => {
         const newErrors = { ...prev }
@@ -35,18 +34,17 @@ export function useForm<T extends Record<string, any>>({
   }, [])
 
   const handleSubmit = useCallback(async () => {
-    // Mark all fields as touched
     const allTouched = Object.keys(values).reduce(
       (acc, key) => ({ ...acc, [key]: true }),
       {}
     )
     setTouched(allTouched)
 
-    // Validate
+
     const validationErrors = validate ? validate(values) : {}
     setErrors(validationErrors)
 
-    // If no errors, submit
+
     if (Object.keys(validationErrors).length === 0) {
       setIsSubmitting(true)
       try {

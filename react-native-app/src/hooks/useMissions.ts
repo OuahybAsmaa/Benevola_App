@@ -8,7 +8,7 @@ import {
   updateMissionThunk,
   deleteMissionThunk,
   getMissionsNearbyThunk,
-  getMyFinishedMissionsThunk, // 👈 AJOUTER
+  getMyFinishedMissionsThunk, 
 } from '../redux/thunks/missionsThunks';
 import { resetCreateSuccess, clearError } from '../redux/slices/missionsSlice';
 import { CreateMissionDto } from '../services/mission.service';
@@ -18,7 +18,7 @@ export const useMission = () => {
   const {
     missions,
     myMissions,
-    finishedMissions, // 👈 AJOUTER
+    finishedMissions, 
     currentMission,
     loading,
     error,
@@ -41,7 +41,7 @@ export const useMission = () => {
     return dispatch(getMyMissionsThunk());
   };
 
-  // 👈 AJOUTER
+  
   const getMyFinishedMissions = () => {
     return dispatch(getMyFinishedMissionsThunk());
   };
@@ -69,7 +69,7 @@ export const useMission = () => {
   return {
     missions,
     myMissions,
-    finishedMissions, // 👈 AJOUTER
+    finishedMissions, 
     currentMission,
     loading,
     error,
@@ -78,7 +78,7 @@ export const useMission = () => {
     getAllMissions,
     getMissionById,
     getMyMissions,
-    getMyFinishedMissions, // 👈 AJOUTER
+    getMyFinishedMissions, 
     updateMission,
     deleteMission,
     getMissionsNearby,

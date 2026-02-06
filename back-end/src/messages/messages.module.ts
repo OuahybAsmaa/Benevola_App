@@ -2,17 +2,17 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config'; // ✅ Importer ConfigModule
+import { ConfigModule, ConfigService } from '@nestjs/config'; 
 import { MessagesService } from './messages.service';
 import { MessagesGateway } from './messages.gateway';
 import { MessagesController } from './messages.controller';
 import { Message } from './entities/message.entity';
 import { JwtStrategy } from '../auth/jwt.strategy';
-import { NotificationsModule } from '../notifications/notifications.module'; // ⭐ AJOUT
+import { NotificationsModule } from '../notifications/notifications.module'; 
 
 @Module({
   imports: [
-    ConfigModule, // ✅ AJOUTER ConfigModule ici !
+    ConfigModule, 
     TypeOrmModule.forFeature([Message]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({

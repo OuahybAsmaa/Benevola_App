@@ -3,17 +3,17 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { MulterModule } from '@nestjs/platform-express';
 import { ProfileController } from './profile.controller';
 import { ProfileService } from './profile.service';
-import { User } from '../auth/user.entity'; // Importe User depuis auth
+import { User } from '../auth/user.entity'; 
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User]), // Partage le repository User avec auth
+    TypeOrmModule.forFeature([User]), 
     MulterModule.register({
       dest: './uploads/avatars',
     }),
   ],
   controllers: [ProfileController],
   providers: [ProfileService],
-  exports: [ProfileService], // Exporte le service si besoin ailleurs
+  exports: [ProfileService], 
 })
 export class ProfileModule {}

@@ -1,6 +1,6 @@
-// src/auth/entities/user.entity.ts  (ou le chemin où est ton User)
+// src/auth/entities/user.entity.ts 
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
-// src/auth/user.entity.ts (ou le chemin où est ton User)
+
 
 @Entity('users')
 export class User {
@@ -13,10 +13,10 @@ export class User {
   @Column()
   password: string;
 
-  @Column({ name: 'first_name' })   // ← Ajoute name: 'first_name'
+  @Column({ name: 'first_name' })   
   firstName: string;
 
-  @Column({ name: 'last_name' })    // ← Pareil pour lastName
+  @Column({ name: 'last_name' })  
   lastName: string;
 
   @Column({ nullable: true, name: 'phone' })
@@ -31,7 +31,6 @@ export class User {
   @Column({ type: 'text', nullable: true })
   refreshToken?: string | null;
 
-  // ⭐ NOUVEAU: Token FCM pour les notifications push
   @Column({ name: 'fcm_token', type: 'text', nullable: true })
   fcmToken?: string | null;
 }

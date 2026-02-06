@@ -1,5 +1,5 @@
 // src/components/PermissionRequestModal.tsx
-import React, { useState } from 'react';
+import React, { useState, memo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -17,14 +17,18 @@ interface PermissionRequestModalProps {
   onGrantPermission: () => Promise<boolean>;
 }
 
-export const PermissionRequestModal: React.FC<PermissionRequestModalProps> = ({
+export const PermissionRequestModal: React.FC<PermissionRequestModalProps> = memo(({
   visible,
   onClose,
   onGrantPermission,
 }) => {
   const [loading, setLoading] = useState(false);
 
-  const handleGrantPermission = async () => {
+  const handleClose = useCallback(() => {
+    onClose();
+  }, [onClose]);
+
+  const handleGrantPermission = useCallback(async () => {
     setLoading(true);
     try {
       const granted = await onGrantPermission();
@@ -32,13 +36,13 @@ export const PermissionRequestModal: React.FC<PermissionRequestModalProps> = ({
         Alert.alert(
           'Succès',
           'Les notifications sont maintenant activées !',
-          [{ text: 'OK', onPress: onClose }]
+          [{ text: 'OK', onPress: handleClose }]
         );
       } else {
         Alert.alert(
           'Permission refusée',
           'Vous pourrez activer les notifications plus tard dans les paramètres.',
-          [{ text: 'OK', onPress: onClose }]
+          [{ text: 'OK', onPress: handleClose }]
         );
       }
     } catch (error) {
@@ -46,23 +50,23 @@ export const PermissionRequestModal: React.FC<PermissionRequestModalProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [onGrantPermission, handleClose]);
 
-  const openSettings = () => {
+  const openSettings = useCallback(() => {
     if (Platform.OS === 'ios') {
       Linking.openURL('app-settings:');
     } else {
       Linking.openSettings();
     }
-    onClose();
-  };
+    handleClose();
+  }, [handleClose]);
 
   return (
     <Modal
       visible={visible}
       transparent
       animationType="slide"
-      onRequestClose={onClose}
+      onRequestClose={handleClose}
     >
       <View style={{
         flex: 1,
@@ -129,7 +133,7 @@ export const PermissionRequestModal: React.FC<PermissionRequestModalProps> = ({
                 borderWidth: 1,
                 borderColor: '#ddd',
               }}
-              onPress={onClose}
+              onPress={handleClose}
               disabled={loading}
             >
               <Text style={{
@@ -160,4 +164,4 @@ export const PermissionRequestModal: React.FC<PermissionRequestModalProps> = ({
       </View>
     </Modal>
   );
-};
+});

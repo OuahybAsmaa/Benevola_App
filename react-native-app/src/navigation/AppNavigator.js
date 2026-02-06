@@ -22,10 +22,7 @@ import EditOrganizerProfileScreen from "../screen/organizer/EditOrganizerProfile
 import EditMissionScreen from "../screen/organizer/EditMissionScreen"
 import EditProfileScreen from "../screen/EditProfileScreen"
 import OrganizerMessagingScreen from "../screen/organizer/OrganizerMessagingScreen"
-
-// ⭐ AJOUT : Importer le modal de permissions
 import { PermissionRequestModal } from "../components/PermissionRequestModal"
-// ⭐ AJOUT : Importer le hook de notifications
 import { usePushNotifications } from "../hooks/usePushNotifications"
 
 // ===== CONFIGURATION DES ÉCRANS =====
@@ -61,36 +58,28 @@ function AppNavigator() {
   const [messagingParams, setMessagingParams] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   
-  // ⭐ AJOUT : États pour le modal de permissions
   const [showPermissionModal, setShowPermissionModal] = useState(false)
   const [permissionRequested, setPermissionRequested] = useState(false)
   
-  // Utiliser une ref pour éviter les re-renders
   const hasNavigatedAfterAuth = useRef(false)
   const permissionCheckTimer = useRef(null)
-  const tokenRegistered = useRef(false) // ⭐ NOUVEAU : Tracker si le token est déjà enregistré
+  const tokenRegistered = useRef(false) 
 
-  // ⭐ AJOUT : Initialiser les notifications push
   const { 
     expoPushToken, 
     permissionGranted, 
     requestPermissions,
-    registerFcmToken // ⭐ NOUVEAU : Fonction pour enregistrer le token
+    registerFcmToken 
   } = usePushNotifications({
     onNotificationReceived: (notification) => {
-      console.log('📬 Notification reçue:', notification)
-      // Vous pouvez gérer les notifications ici si nécessaire
     },
     onNotificationTapped: (response) => {
-      console.log('👆 Notification tapée:', response)
-      // Gérer la navigation lorsqu'on clique sur une notification
       handleNotificationNavigation(response.notification.request.content.data)
     },
   })
 
   // ===== FONCTION POUR GÉRER LA NAVIGATION DES NOTIFICATIONS =====
   const handleNotificationNavigation = useCallback((data) => {
-    console.log('🧭 Navigation depuis notification:', data)
     
     if (data?.missionId) {
       if (user?.role === "organisation") {
@@ -109,7 +98,6 @@ function AppNavigator() {
     }
   }, [user])
 
-  // ===== INITIALISATION DE L'APP =====
   useEffect(() => {
     const initializeApp = async () => {
       await dispatch(checkAuthThunk())
@@ -117,26 +105,17 @@ function AppNavigator() {
     initializeApp()
   }, [dispatch])
 
-  // ⭐ NOUVEAU : ENREGISTRER LE TOKEN FCM APRÈS CONNEXION
   useEffect(() => {
     const registerToken = async () => {
-      // Vérifier que :
-      // 1. L'utilisateur est connecté
-      // 2. On a un token
-      // 3. Les permissions sont accordées
-      // 4. Le token n'a pas déjà été enregistré
+
       if (isAuthenticated && expoPushToken && permissionGranted && !tokenRegistered.current) {
-        console.log('👤 Utilisateur connecté, enregistrement du token FCM...')
         try {
           await registerFcmToken(expoPushToken)
           tokenRegistered.current = true
-          console.log('✅ Token FCM enregistré avec succès')
         } catch (error) {
-          console.error('❌ Erreur enregistrement token FCM:', error)
         }
       }
       
-      // Réinitialiser le flag si l'utilisateur se déconnecte
       if (!isAuthenticated && tokenRegistered.current) {
         tokenRegistered.current = false
       }
@@ -145,16 +124,15 @@ function AppNavigator() {
     registerToken()
   }, [isAuthenticated, expoPushToken, permissionGranted, registerFcmToken])
 
-  // ===== VÉRIFICATION DES PERMISSIONS APRÈS CONNEXION =====
   useEffect(() => {
     if (!isLoading && isAuthenticated && !permissionRequested) {
-      // Vérifier les permissions après un délai
+  
       permissionCheckTimer.current = setTimeout(() => {
         if (!permissionGranted) {
           setShowPermissionModal(true)
         }
         setPermissionRequested(true)
-      }, 2000) // 2 secondes après la connexion
+      }, 2000) 
     }
 
     return () => {
@@ -164,54 +142,46 @@ function AppNavigator() {
     }
   }, [isLoading, isAuthenticated, permissionGranted, permissionRequested])
 
-  // ===== FONCTION POUR DEMANDER LES PERMISSIONS =====
+
   const handleRequestPermission = async () => {
     try {
       const granted = await requestPermissions()
       
-      // ⭐ NOUVEAU : Si les permissions sont accordées, enregistrer le token immédiatement
+    
       if (granted && expoPushToken && isAuthenticated && !tokenRegistered.current) {
-        console.log('✅ Permissions accordées, enregistrement du token...')
         await registerFcmToken(expoPushToken)
         tokenRegistered.current = true
       }
       
       return granted
     } catch (error) {
-      console.error('Erreur demande permissions:', error)
       return false
     }
   }
 
-  // ===== FONCTION DE NAVIGATION PRINCIPALE (useCallback pour stabilité) =====
+
   const navigate = useCallback((screen, params = null, resetHistory = false) => {
-    console.log('🧭 Navigation vers:', screen, 'avec params:', params)
     
-    // Gérer les params
+
     if (params !== null && params !== undefined) {
       if (typeof params === 'object') {
         if (screen === 'organizer-messaging') {
-          console.log('💬 Params messagerie organisateur:', params)
           setSelectedMissionId(params.missionId)
           if (params.missionTitle) {
             setSelectedMissionTitle(params.missionTitle)
           }
         }
         else if (screen === 'messaging') {
-          console.log('💬 Params messagerie bénévole:', params)
           setMessagingParams(params)
         }
         else if (params.missionId) {
-          console.log('🆔 Mission ID reçu (objet):', params.missionId)
           setSelectedMissionId(params.missionId)
         }
       } else if (typeof params === 'string') {
-        console.log('🆔 Mission ID reçu (string):', params)
         setSelectedMissionId(params)
       }
     }
     
-    // Gérer l'historique de navigation
     if (resetHistory) {
       setNavigationHistory([])
     } else {
@@ -222,12 +192,10 @@ function AppNavigator() {
         return [...prev, currentScreen]
       })
     }
-    
-    // Changer d'écran
+
     setCurrentScreen(screen)
   }, [currentScreen])
 
-  // ===== FONCTION POUR REVENIR EN ARRIÈRE =====
   const goBack = useCallback(() => {
     if (navigationHistory.length > 0) {
       const previousScreen = navigationHistory[navigationHistory.length - 1]
@@ -247,7 +215,7 @@ function AppNavigator() {
     }
   }, [navigationHistory, user, isAuthenticated])
 
-  // ===== GESTION DU SPLASH SCREEN ET NAVIGATION INITIALE =====
+
   useEffect(() => {
     if (!isInitialized) return
 
@@ -267,7 +235,6 @@ function AppNavigator() {
     return () => clearTimeout(timer)
   }, [isInitialized])
 
-  // ===== LISTENER POUR NAVIGATION AUTOMATIQUE APRÈS LOGIN =====
   useEffect(() => {
     if (isLoading || !isInitialized) {
       hasNavigatedAfterAuth.current = false
@@ -296,12 +263,11 @@ function AppNavigator() {
     }
   }, [isAuthenticated, user, isInitialized, isLoading, currentScreen])
 
-  // ===== AFFICHAGE DU SPLASH SCREEN =====
+
   if (isLoading || !isInitialized) {
     return (
       <>
         <SplashScreen />
-        {/* ⭐ AJOUT : Modal de permissions (caché pendant le splash) */}
         <PermissionRequestModal
           visible={false}
           onClose={() => {}}
@@ -311,7 +277,6 @@ function AppNavigator() {
     )
   }
 
-  // ===== OBJET NAVIGATION À PASSER AUX COMPOSANTS =====
   const navigationObject = {
     navigate,
     goBack,
@@ -320,12 +285,10 @@ function AppNavigator() {
     resetAndNavigate: (screen, params = null) => navigate(screen, params, true)
   }
 
-  // ===== RENDU DE L'ÉCRAN ACTUEL =====
   const renderScreen = () => {
     const ScreenComponent = SCREENS[currentScreen]
     
     if (!ScreenComponent) {
-      console.warn(`Écran "${currentScreen}" non trouvé, redirection vers login`)
       return <LoginScreen onNavigate={navigate} navigation={navigationObject} />
     }
 
@@ -337,14 +300,10 @@ function AppNavigator() {
     const specificProps = {}
     
     if (currentScreen === "mission-detail" || currentScreen === "edit-mission") {
-      console.log('📦 Passage du missionId au composant:', selectedMissionId)
       specificProps.missionId = selectedMissionId
     }
 
     if (currentScreen === "organizer-messaging") {
-      console.log('💬 Passage des params au OrganizerMessagingScreen:')
-      console.log('- Mission ID:', selectedMissionId)
-      console.log('- Mission Title:', selectedMissionTitle)
       
       specificProps.missionId = selectedMissionId
       if (selectedMissionTitle) {
@@ -353,7 +312,6 @@ function AppNavigator() {
     }
 
     if (currentScreen === "messaging" && messagingParams) {
-      console.log('💬 Passage des params messagerie bénévole au composant:', messagingParams)
       specificProps.organizerId = messagingParams.organizerId
       specificProps.organizerName = messagingParams.organizerName
       specificProps.missionId = messagingParams.missionId
@@ -365,10 +323,8 @@ function AppNavigator() {
 
   return (
     <>
-      {/* Écran principal */}
       {renderScreen()}
-      
-      {/* ⭐ AJOUT : Modal de permissions */}
+
       <PermissionRequestModal
         visible={showPermissionModal}
         onClose={() => setShowPermissionModal(false)}

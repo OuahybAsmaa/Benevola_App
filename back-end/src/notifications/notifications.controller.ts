@@ -15,11 +15,10 @@ import { CreateNotificationDto, GetNotificationsDto } from './dto/create-notific
 import { AuthGuard } from '@nestjs/passport';
 
 @Controller('notifications')
-@UseGuards(AuthGuard('jwt')) // ✅ Utiliser AuthGuard au lieu de JwtStrategy directement
+@UseGuards(AuthGuard('jwt')) 
 export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
 
-  // Récupérer les notifications de l'utilisateur connecté
   @Get()
   async getUserNotifications(
     @Request() req,
@@ -34,27 +33,23 @@ export class NotificationsController {
     );
   }
 
-  // Récupérer le nombre de notifications non lues
   @Get('unread-count')
   async getUnreadCount(@Request() req) {
     const count = await this.notificationsService.getUnreadCount(req.user.id);
     return { count };
   }
 
-  // Marquer une notification comme lue
   @Patch(':id/read')
   async markAsRead(@Param('id') id: string) {
     return this.notificationsService.markAsRead(id);
   }
 
-  // Marquer toutes les notifications comme lues
   @Patch('read-all')
   async markAllAsRead(@Request() req) {
     await this.notificationsService.markAllAsRead(req.user.id);
     return { message: 'All notifications marked as read' };
   }
 
-  // Supprimer une notification
   @Delete(':id')
   async delete(@Param('id') id: string) {
     await this.notificationsService.delete(id);

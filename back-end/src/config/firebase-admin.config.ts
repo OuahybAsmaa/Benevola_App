@@ -1,4 +1,3 @@
-// src/config/firebase-admin.config.ts
 import * as admin from 'firebase-admin';
 import { Logger } from '@nestjs/common';
 
@@ -8,15 +7,7 @@ let firebaseAdminInitialized = false;
 
 export function initializeFirebaseAdmin() {
   if (!firebaseAdminInitialized) {
-    logger.log('🔥 Initializing Firebase Admin SDK...');
-    
-    // Vérifier les variables d'environnement
     if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_PRIVATE_KEY) {
-      logger.error('❌ Firebase environment variables are missing');
-      logger.error(`Project ID: ${process.env.FIREBASE_PROJECT_ID ? 'Present' : 'Missing'}`);
-      logger.error(`Private Key: ${process.env.FIREBASE_PRIVATE_KEY ? 'Present' : 'Missing'}`);
-      // Ne pas throw ici, seulement logger l'erreur
-      // L'initialisation se fera quand les variables seront disponibles
       return null;
     }
 
@@ -36,9 +27,6 @@ export function initializeFirebaseAdmin() {
         client_x509_cert_url: process.env.FIREBASE_CLIENT_CERT_URL,
         universe_domain: 'googleapis.com',
       };
-
-      logger.log(`✅ Firebase Project: ${serviceAccount.project_id}`);
-      logger.log(`✅ Client Email: ${serviceAccount.client_email}`);
       
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
@@ -46,11 +34,9 @@ export function initializeFirebaseAdmin() {
       });
       
       firebaseAdminInitialized = true;
-      logger.log('✅ Firebase Admin SDK initialized successfully');
       
       return admin;
     } catch (error) {
-      logger.error('❌ Error initializing Firebase Admin:', error);
       return null;
     }
   }
@@ -58,7 +44,6 @@ export function initializeFirebaseAdmin() {
   return admin;
 }
 
-// Exportez les services avec initialisation paresseuse
 export function getFirebaseAdmin() {
   return initializeFirebaseAdmin();
 }
@@ -71,7 +56,6 @@ export function getMessaging() {
   return adminInstance.messaging();
 }
 
-// Initialiser au démarrage si possible
 export function initializeFirebaseOnStartup() {
   return initializeFirebaseAdmin();
 }

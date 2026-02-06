@@ -5,11 +5,10 @@ import { NotificationsController } from './notifications.controller';
 import { Notification } from './entities/notification.entity';
 import { FirebasePushService } from './firebase-push.service';
 import { User } from '../auth/user.entity';
-// ⭐ Supprimer l'import de AuthModule
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Notification, User]), // ⭐ Seulement le repository User
+    TypeOrmModule.forFeature([Notification, User]), 
   ],
   controllers: [NotificationsController],
   providers: [

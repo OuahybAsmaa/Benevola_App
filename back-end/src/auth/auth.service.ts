@@ -72,10 +72,6 @@ export class AuthService {
     };
   }
 
-
-
-
-
   
   async refreshAccessToken(refreshToken: string): Promise<any> {
     const user = await this.userRepository.findOne({ where: { refreshToken } });
@@ -97,9 +93,7 @@ export class AuthService {
     }
   }
 
-  // Ajoute une méthode pour getCurrentUser si besoin
-  // Dans auth.service.ts
-async getUserById(id: string): Promise<User | null> {   // ← Ajoute | null
+async getUserById(id: string): Promise<User | null> {   
   return this.userRepository.findOne({ where: { id } });
 }
 }

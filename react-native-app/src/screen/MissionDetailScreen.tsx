@@ -18,7 +18,6 @@ import { styles } from "../style/benevole/MissionDetailScreen.style";
 import { colors } from "../style/theme";
 import { getImageUrl } from "../config/api.config";
 
-// ⭐ PROPS PERSONNALISÉES (pas de React Navigation)
 interface MissionDetailScreenProps {
   missionId: string;
   navigation: {
@@ -48,30 +47,24 @@ const MissionDetailScreen: React.FC<MissionDetailScreenProps> = ({
 
   const [refreshing, setRefreshing] = useState(false);
 
-  // ⭐ Vérification de la présence du missionId
   useEffect(() => {
     if (!missionId) {
-      console.error('❌ Aucun missionId fourni');
       Alert.alert('Erreur', 'Mission introuvable');
       navigation.goBack();
       return;
     }
     
-    console.log('✅ MissionDetailScreen monté avec ID:', missionId);
     loadMissionData();
   }, [missionId]);
 
   const loadMissionData = async () => {
     try {
-      console.log('📡 Chargement mission:', missionId);
       await getMissionById(missionId);
       
       if (user) {
-        console.log('👤 Vérification inscription pour user:', user.id);
         await checkRegistration(missionId);
       }
     } catch (error) {
-      console.error("❌ Erreur chargement mission:", error);
       Alert.alert('Erreur', 'Impossible de charger la mission');
     }
   };
@@ -99,12 +92,10 @@ const MissionDetailScreen: React.FC<MissionDetailScreenProps> = ({
     }
 
     try {
-      console.log('📝 Inscription à la mission:', missionId);
       await registerToMission(missionId);
       Alert.alert("Succès", "Vous êtes maintenant inscrit à cette mission !");
       await loadMissionData();
     } catch (error: any) {
-      console.error('❌ Erreur inscription:', error);
       Alert.alert(
         "Erreur",
         error.response?.data?.message || "Impossible de s'inscrire à cette mission"
@@ -123,12 +114,10 @@ const MissionDetailScreen: React.FC<MissionDetailScreenProps> = ({
           style: "destructive",
           onPress: async () => {
             try {
-              console.log('🚫 Désinscription de la mission:', missionId);
               await unregisterFromMission(missionId);
               Alert.alert("Succès", "Vous êtes désinscrit de cette mission");
               await loadMissionData();
             } catch (error: any) {
-              console.error('❌ Erreur désinscription:', error);
               Alert.alert(
                 "Erreur",
                 error.response?.data?.message || "Impossible de se désinscrire"
@@ -140,7 +129,6 @@ const MissionDetailScreen: React.FC<MissionDetailScreenProps> = ({
     );
   };
 
-  // ⭐ NOUVELLE FONCTION : Ouvrir la messagerie avec l'organisateur
   const handleOpenMessaging = () => {
     if (!user) {
       Alert.alert(
@@ -165,18 +153,15 @@ const MissionDetailScreen: React.FC<MissionDetailScreenProps> = ({
     });
   };
 
-  // Affichage du chargement
-  // Affichage du chargement
-if (missionLoading && !currentMission) {
-  return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <ActivityIndicator size="large" color={colors.primary} />
-      <Text style={styles.loadingText}>Chargement...</Text>
-    </View>
-  );
-}
+  if (missionLoading && !currentMission) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={styles.loadingText}>Chargement...</Text>
+      </View>
+    );
+  }
 
-  // Affichage erreur
   if (!currentMission) {
     return (
       <View style={{ flex: 1 }}>
@@ -204,16 +189,13 @@ if (missionLoading && !currentMission) {
   const isMissionFinished = mission.status === "finished";
   const canRegister = !isOrganizer && !isMissionFinished && !isMissionComplete;
 
-  // URL de l'image de la mission
   const missionImageUrl = mission.image ? getImageUrl(mission.image) : null;
   
-  // URL de l'avatar de l'organisateur
   const organizerAvatarUrl = mission.organizer?.avatar ? 
     getImageUrl(mission.organizer.avatar) : null;
 
   return (
     <View style={{ flex: 1 }}>
-      {/* Mobile Header avec bouton retour */}
       <MobileHeader 
         title="Détails de la mission"
         showBack
@@ -221,39 +203,34 @@ if (missionLoading && !currentMission) {
       />
 
       <ScrollView style={{ flex: 1 }}>
-        {/* Image de la mission */}
-       {/* Image de la mission */}
-<View style={styles.imageContainer}>
-  <Image
-    source={
-      missionImageUrl
-        ? { uri: missionImageUrl }
-        : require("../../assets/default-mission.png")
-    }
-    style={styles.image}
-    resizeMode="cover"
-  />
+        <View style={styles.imageContainer}>
+          <Image
+            source={
+              missionImageUrl
+                ? { uri: missionImageUrl }
+                : require("../../assets/default-mission.png")
+            }
+            style={styles.image}
+            resizeMode="cover"
+          />
 
-  {/* Badge catégorie */}
-  <View style={styles.categoryBadge}>
-    <Text style={styles.categoryText}>{mission.category}</Text>
-  </View>
+          <View style={styles.categoryBadge}>
+            <Text style={styles.categoryText}>{mission.category}</Text>
+          </View>
 
-  {/* ⭐ Actions - MODIFIÉ: uniquement messagerie */}
-  <View style={styles.imageActions}>
-    {!isOrganizer && (
-      <TouchableOpacity 
-        style={styles.actionButton}
-        onPress={handleOpenMessaging}
-      >
-        <Ionicons name="chatbubble-outline" size={24} color={colors.text.primary} />
-      </TouchableOpacity>
-    )}
-  </View>
-</View>
-        {/* Contenu de la mission */}
+          <View style={styles.imageActions}>
+            {!isOrganizer && (
+              <TouchableOpacity 
+                style={styles.actionButton}
+                onPress={handleOpenMessaging}
+              >
+                <Ionicons name="chatbubble-outline" size={24} color={colors.text.primary} />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
         <View style={styles.detailsContainer}>
-          {/* Organisation */}
           <View style={styles.organizationRow}>
             {organizerAvatarUrl ? (
               <Image
@@ -278,10 +255,8 @@ if (missionLoading && !currentMission) {
             </View>
           </View>
 
-          {/* Titre */}
           <Text style={styles.title}>{mission.title}</Text>
 
-          {/* Informations de base */}
           <View style={styles.infoGrid}>
             <View style={styles.infoItem}>
               <Ionicons name="calendar-outline" size={20} color={colors.primary} />
@@ -308,7 +283,6 @@ if (missionLoading && !currentMission) {
             )}
           </View>
 
-          {/* Description */}
           {mission.description && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Description</Text>
@@ -316,7 +290,6 @@ if (missionLoading && !currentMission) {
             </View>
           )}
 
-          {/* Localisation */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Lieu</Text>
             <View style={styles.locationRow}>
@@ -330,7 +303,6 @@ if (missionLoading && !currentMission) {
             </View>
           </View>
 
-          {/* Statut de la mission */}
           {isMissionComplete && (
             <View style={styles.section}>
               <View
@@ -363,12 +335,10 @@ if (missionLoading && !currentMission) {
             </View>
           )}
 
-          {/* Espace pour le bouton fixe */}
           <View style={{ height: 100 }} />
         </View>
       </ScrollView>
 
-      {/* Bouton d'inscription/désinscription fixe en bas */}
       {!isOrganizer && (
         <View style={styles.bottomButton}>
           {isRegistered ? (

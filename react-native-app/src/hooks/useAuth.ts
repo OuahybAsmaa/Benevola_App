@@ -101,10 +101,10 @@ export function useAuth() {
     login,
     register,
     logout,
-    getProfile,     // ✅ ajouté
-    updateProfile,  // ✅ ajouté
-    uploadAvatar,   // ✅ ajouté
-    updateUser,     // ✅ ajouté
+    getProfile,    
+    updateProfile,  
+    uploadAvatar,   
+    updateUser,     
     clearError: clearAuthError,
   }
 }

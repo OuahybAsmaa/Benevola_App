@@ -1,5 +1,5 @@
 // src/services/api/auth.service.ts
-import api from '../api/loginAPI'           // ← le client axios avec interceptors
+import api from '../api/loginAPI'           
 import * as SecureStore from 'expo-secure-store'
 
 export interface User {
@@ -15,7 +15,6 @@ export interface User {
 export interface LoginCredentials {
   email: string
   password: string
-  // role?: 'benevole' | 'organisation'   ← on peut le retirer si backend ne l'exige plus
 }
 
 export interface RegisterData {
@@ -84,8 +83,7 @@ class AuthService {
 
   async logout(): Promise<void> {
     try {
-      // Optionnel : appeler le endpoint logout si ton backend le gère
-      await api.post('/auth/logout').catch(() => {}) // on ignore l'erreur
+      await api.post('/auth/logout').catch(() => {}) 
 
       await SecureStore.deleteItemAsync('access_token')
       await SecureStore.deleteItemAsync('refresh_token')
@@ -110,14 +108,13 @@ class AuthService {
     await SecureStore.setItemAsync(this.USER_KEY, JSON.stringify(user))
   }
 
-  // Utile si tu veux forcer une vérification du token (ex: appel /auth/me)
   async validateTokenAndGetUser(): Promise<User | null> {
     try {
       const { data } = await api.get('/auth/me')
-      await this.storeUser(data) // mise à jour au cas où
+      await this.storeUser(data) 
       return data
     } catch (error) {
-      await this.logout() // token invalide → on déconnecte
+      await this.logout() 
       return null
     }
   }

@@ -1,4 +1,5 @@
 // components/common/Button.tsx
+import { memo, useCallback } from "react"
 import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, type ViewStyle, type TextStyle } from "react-native"
 import { colors, borderRadius, spacing, fontSize, fontWeight } from "../../style/theme"
 
@@ -15,7 +16,7 @@ interface ButtonProps {
   textStyle?: TextStyle
 }
 
-export default function Button({
+const Button = memo(({
   title,
   onPress,
   variant = "primary",
@@ -26,7 +27,11 @@ export default function Button({
   fullWidth = false,
   style,
   textStyle,
-}: ButtonProps) {
+}: ButtonProps) => {
+  const handlePress = useCallback(() => {
+    onPress()
+  }, [onPress])
+
   const buttonStyles = [
     styles.button,
     styles[`button_${variant}`],
@@ -46,7 +51,7 @@ export default function Button({
   return (
     <TouchableOpacity
       style={buttonStyles}
-      onPress={onPress}
+      onPress={handlePress}
       disabled={disabled || loading}
       activeOpacity={0.7}
     >
@@ -60,7 +65,9 @@ export default function Button({
       )}
     </TouchableOpacity>
   )
-}
+})
+
+export default Button
 
 const styles = StyleSheet.create({
   button: {
@@ -71,7 +78,6 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   
-  // Variants
   button_primary: {
     backgroundColor: colors.primary,
   },

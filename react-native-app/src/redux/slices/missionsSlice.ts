@@ -8,13 +8,13 @@ import {
   updateMissionThunk,
   deleteMissionThunk,
   getMissionsNearbyThunk,
-  getMyFinishedMissionsThunk, // 👈 AJOUTER
+  getMyFinishedMissionsThunk, 
 } from '../thunks/missionsThunks';
 
 interface MissionState {
   missions: Mission[];
   myMissions: Mission[];
-  finishedMissions: Mission[]; // 👈 AJOUTER
+  finishedMissions: Mission[]; 
   currentMission: Mission | null;
   loading: boolean;
   error: string | null;
@@ -24,7 +24,7 @@ interface MissionState {
 const initialState: MissionState = {
   missions: [],
   myMissions: [],
-  finishedMissions: [], // 👈 AJOUTER
+  finishedMissions: [], 
   currentMission: null,
   loading: false,
   error: null,
@@ -154,7 +154,6 @@ const missionSlice = createSlice({
         state.error = action.payload as string;
       });
 
-    // 👈 AJOUTER — Get My Finished Missions
     builder
       .addCase(getMyFinishedMissionsThunk.pending, (state) => {
         state.loading = true;

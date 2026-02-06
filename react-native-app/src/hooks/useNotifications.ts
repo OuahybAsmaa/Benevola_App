@@ -10,7 +10,6 @@ export const useNotifications = () => {
   const [hasMore, setHasMore] = useState<boolean>(false);
   const [page, setPage] = useState<number>(1);
 
-  // Récupérer les notifications
   const fetchNotifications = useCallback(async (pageNum: number = 1, append: boolean = false) => {
     setLoading(true);
     setError(null);
@@ -34,7 +33,6 @@ export const useNotifications = () => {
     }
   }, []);
 
-  // Récupérer uniquement le nombre de notifications non lues
   const fetchUnreadCount = useCallback(async () => {
     try {
       const count = await notificationService.getUnreadCount();
@@ -44,12 +42,10 @@ export const useNotifications = () => {
     }
   }, []);
 
-  // Marquer une notification comme lue
   const markAsRead = useCallback(async (notificationId: string) => {
     try {
       await notificationService.markNotificationAsRead(notificationId);
-      
-      // Mettre à jour l'état local
+
       setNotifications(prev =>
         prev.map(notif =>
           notif.id === notificationId ? { ...notif, isRead: true } : notif
@@ -63,12 +59,10 @@ export const useNotifications = () => {
     }
   }, []);
 
-  // Marquer toutes les notifications comme lues
   const markAllAsRead = useCallback(async () => {
     try {
       await notificationService.markAllNotificationsAsRead();
-      
-      // Mettre à jour l'état local
+
       setNotifications(prev =>
         prev.map(notif => ({ ...notif, isRead: true }))
       );
@@ -80,16 +74,14 @@ export const useNotifications = () => {
     }
   }, []);
 
-  // Supprimer une notification
+
   const deleteNotif = useCallback(async (notificationId: string) => {
     try {
       await notificationService.deleteNotification(notificationId);
-      
-      // Retirer de l'état local
+
       const deletedNotif = notifications.find(n => n.id === notificationId);
       setNotifications(prev => prev.filter(n => n.id !== notificationId));
-      
-      // Décrémenter le compteur si c'était non lu
+
       if (deletedNotif && !deletedNotif.isRead) {
         setUnreadCount(prev => Math.max(0, prev - 1));
       }
@@ -99,14 +91,12 @@ export const useNotifications = () => {
     }
   }, [notifications]);
 
-  // Charger plus de notifications (pagination)
   const loadMore = useCallback(() => {
     if (!loading && hasMore) {
       fetchNotifications(page + 1, true);
     }
   }, [loading, hasMore, page, fetchNotifications]);
 
-  // Charger les notifications au montage
   useEffect(() => {
     fetchNotifications();
   }, []);

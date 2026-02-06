@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { User } from '../../services/auth.service'
 import { loginThunk, registerThunk, logoutThunk, checkAuthThunk } from '../thunks/authThunks'
-import { updateProfileThunk, uploadAvatarThunk, getProfileThunk } from '../thunks/profileThunks' // 👈 AJOUTER
+import { updateProfileThunk, uploadAvatarThunk, getProfileThunk } from '../thunks/profileThunks' 
 
 interface AuthState {
   user: User | null
@@ -101,7 +101,6 @@ const authSlice = createSlice({
         state.error = action.payload as string
       })
 
-    // 👇 AJOUTER TOUS CES REDUCERS POUR LE PROFIL
 
     // Get Profile
     builder

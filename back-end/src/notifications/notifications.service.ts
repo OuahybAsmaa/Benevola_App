@@ -11,7 +11,7 @@ export class NotificationsService {
   constructor(
     @InjectRepository(Notification)
     private notificationsRepository: Repository<Notification>,
-    private firebasePushService: FirebasePushService, // ⭐ AJOUT
+    private firebasePushService: FirebasePushService, 
   ) {}
 
   // Créer une notification
@@ -20,33 +20,30 @@ export class NotificationsService {
     return await this.notificationsRepository.save(notification);
   }
 
-  // Créer une notification de message (MODIFIÉ avec Push)
   async createMessageNotification(
     receiverId: string,
     senderName: string,
     missionTitle?: string,
     missionId?: string,
-    senderId?: string, // ⭐ AJOUT: ID de l'expéditeur
+    senderId?: string, 
   ): Promise<Notification> {
     const description = missionTitle 
       ? `${senderName} vous a envoyé un message concernant "${missionTitle}"`
       : `${senderName} vous a envoyé un message`;
 
-    // Créer la notification en base de données
     const notification = await this.create({
       userId: receiverId,
       type: NotificationType.MESSAGE,
       title: 'Nouveau message',
       description,
       data: {
-        senderId: senderId || receiverId, // ⭐ CORRECTION: Utiliser senderId au lieu de receiverId
+        senderId: senderId || receiverId, 
         senderName,
         missionId,
         missionTitle,
       },
     });
 
-    // ⭐ NOUVEAU: Envoyer une notification push
     try {
       await this.firebasePushService.sendPushNotification(receiverId, {
         title: 'Nouveau message',
@@ -62,13 +59,11 @@ export class NotificationsService {
       });
     } catch (error) {
       console.error('❌ Erreur envoi push notification:', error);
-      // Ne pas bloquer si l'envoi de la push échoue
     }
 
     return notification;
   }
 
-  // Récupérer les notifications d'un utilisateur
   async getUserNotifications(
     userId: string,
     page: number = 1,

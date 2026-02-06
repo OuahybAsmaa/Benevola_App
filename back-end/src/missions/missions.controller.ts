@@ -23,7 +23,7 @@ import { extname } from 'path';
 export class MissionsController {
   constructor(private readonly missionsService: MissionsService) {}
 
-  // Créer une mission (avec upload d'image optionnel)
+
   @UseGuards(AuthGuard('jwt'))
   @Post()
   @UseInterceptors(
@@ -42,7 +42,7 @@ export class MissionsController {
         }
         cb(null, true);
       },
-      limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
+      limits: { fileSize: 5 * 1024 * 1024 }, 
     }),
   )
   async create(
@@ -60,7 +60,6 @@ export class MissionsController {
     });
   }
 
-  // Récupérer toutes les missions
   @Get()
   async findAll(@Query('latitude') lat?: string, @Query('longitude') lng?: string, @Query('radius') radius?: string) {
     if (lat && lng && radius) {
@@ -73,30 +72,23 @@ export class MissionsController {
     return this.missionsService.findAll();
   }
 
-  // ⚠️ Ces routes spécifiques DOIVENT être avant @Get(':id')
-  // sinon Express interprète "organizer" comme un :id
-
-  // Récupérer les missions actives + completes de l'organisateur (dashboard)
   @UseGuards(AuthGuard('jwt'))
   @Get('organizer/my-missions')
   async getMyMissions(@Req() req) {
     return this.missionsService.findByOrganizer(req.user.sub);
   }
 
-  // Récupérer les missions terminées de l'organisateur (historique profil)
   @UseGuards(AuthGuard('jwt'))
   @Get('organizer/my-finished-missions')
   async getMyFinishedMissions(@Req() req) {
     return this.missionsService.findFinishedByOrganizer(req.user.sub);
   }
 
-  // Récupérer une mission par ID
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return this.missionsService.findOne(id);
   }
 
-  // Mettre à jour une mission
   @UseGuards(AuthGuard('jwt'))
   @Put(':id')
   @UseInterceptors(
@@ -124,7 +116,6 @@ export class MissionsController {
     });
   }
 
-  // Supprimer une mission
   @UseGuards(AuthGuard('jwt'))
   @Delete(':id')
   async delete(@Param('id') id: string, @Req() req) {

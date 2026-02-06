@@ -65,11 +65,7 @@ class MissionService {
           name: filename,
           type,
         } as any);
-
-        console.log('📷 Image ajoutée:', filename);
       }
-
-      console.log('🌐 Envoi vers: /missions');
 
       const response = await api.post('/missions', formData, {
         headers: {
@@ -77,11 +73,9 @@ class MissionService {
         },
       });
 
-      console.log('✅ Mission créée:', response.data);
       return response.data;
 
     } catch (error: any) {
-      console.error('❌ Erreur création mission:', error.response?.data || error.message);
       throw error;
     }
   }

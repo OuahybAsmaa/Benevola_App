@@ -5,25 +5,24 @@ import { Message } from '../api/messages';
 
 export const useSocket = () => {
   const [connected, setConnected] = useState(false);
-  // ✅ CORRECTION: Typer correctement newMessage avec Message | null
+ 
   const [newMessage, setNewMessage] = useState<Message | null>(null);
-  // ✅ CORRECTION: Spécifier le type du Set<string>
+
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    // Connecter au socket au montage
+ 
     const connectSocket = async () => {
       try {
         await socketService.connect();
         setConnected(true);
 
-        // Écouter les nouveaux messages
+
         socketService.onNewMessage((message: Message) => {
           setNewMessage(message);
         });
 
-        // ✅ CORRECTION: Typer explicitement le paramètre prev
-        // Écouter les utilisateurs qui tapent
+
         socketService.onUserTyping((data: { userId: string }) => {
           setTypingUsers((prev: Set<string>) => new Set(prev).add(data.userId));
         });
@@ -43,7 +42,6 @@ export const useSocket = () => {
 
     connectSocket();
 
-    // Déconnecter au démontage
     return () => {
       socketService.removeAllListeners();
       socketService.disconnect();
