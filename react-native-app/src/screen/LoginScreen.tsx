@@ -188,14 +188,6 @@ export default function LoginScreen({ onNavigate }: LoginScreenProps) {
           />
 
           <Button
-            title="Mot de passe oublié ?"
-            onPress={() => {}}
-            variant="outline"
-            size="small"
-            style={styles.forgotButton}
-          />
-
-          <Button
             title="SE CONNECTER"
             onPress={submitForm}
             variant="primary"
